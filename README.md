@@ -64,11 +64,7 @@ from kilograms import scatterplot_matrix
 # each dimension has a numerical value.
 
 with plt.style.context('dark_background'):
-    scatterplot_matrix(
-        df,
-        show=False,
-        y_labels_offset=-.2,
-    )
-    plt.suptitle("MS1 features")
-    plt.show()
+    scatterplot_matrix(df, y_labels_offset=-.2)
 ```
+
+![](https://github.com/MatteoLacki/kilograms/blob/main/scatterplot_matrix.png "Scatterplot Matrix")
