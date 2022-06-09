@@ -1,12 +1,23 @@
 import itertools
 import numpy as np
+import numpy.typing as npt
 import numba
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
+# ToDo: the float can be a generic numeric type...
+
 @numba.jit(nopython=True)
-def min_max(xx):
+def min_max(xx: npt.NDArray[float]) -> tuple[float]:
+    """Establish the extent of data (minimal and maximal values).
+
+    Arguments:
+        xx (np.array): Values that are searched for minimum and maximum.
+
+    Returns:
+        tuple: The minimal and the maximal value.
+    """
     xx_min = np.inf 
     xx_max =-np.inf
     for x in xx:
@@ -16,7 +27,20 @@ def min_max(xx):
 
 
 @numba.jit(nopython=True)
-def histogram1D(xx, extent, bins):
+def histogram1D(
+    xx: npt.NDArray[float],
+    extent: tuple[float],
+    bins: int
+) -> npt.NDArray[np.uint32]:
+    """Make a 1D histogram.
+
+    Arguments:
+        xx (np.array): Data to bin.
+        extent (tuple)
+
+    Returns:
+        np.array: The counts of data in the evenly spaced bins.
+    """
     xx_min, xx_max = extent
     mult = bins / (xx_max - xx_min)
     result = np.zeros(bins+1, dtype=np.uint32)# +1 for as max guardians
@@ -28,7 +52,22 @@ def histogram1D(xx, extent, bins):
 
 
 @numba.jit(nopython=True, cache=True)
-def histogram2D(xx, yy, extent, bins):
+def histogram2D(
+    xx: npt.NDArray[float],
+    yy: npt.NDArray[float], 
+    extent: tuple[tuple[float]],
+    bins: tuple[int],
+):
+    """Make a 2D histogram.
+
+    Arguments:
+        xx (np.array): First coordinates of points to bin.
+        yy (np.array): Second coordinates of points to bin.
+        extent (tuple of tuples): A tuple of tuples with the extent of data, first in xx, then in yy. 
+        bins (tuple of ints): The number of bins in xx and in yy.
+    Returns:
+        np.array: The counts of data in the evenly spaced bins.
+    """
     (xx_min, xx_max), (yy_min,yy_max) = extent
     xx_bins, yy_bins = bins
     xx_mult = xx_bins / (xx_max - xx_min)
@@ -42,7 +81,21 @@ def histogram2D(xx, yy, extent, bins):
     return result[:-1,:-1]
 
 
-def get_1D_marginals(df, bins, extents):
+def get_1D_marginals(
+    df: pd.DataFrame,
+    bins: dict[str,int],
+    extents: dict[str,tuple[float]],
+) -> dict[tuple[str], npt.NDArray[np.uint32]]:
+    """Get all 1D marginal histograms for a data frame.
+
+    Arguments:
+        df (pd.DataFrame): A data-frame with unique column names.
+        bins (dict of tuple of ints): Maps column name to number of bins.
+        extents (dict of tuples of floats): Maps column name to dimension extent (min, max).
+
+    Returns:
+        dict: The counts of data in the evenly spaced bins.
+    """
     return {
         _col: histogram1D(
             xx=df[_col].to_numpy(),
@@ -53,7 +106,21 @@ def get_1D_marginals(df, bins, extents):
     }
 
 
-def get_2D_marginals(df, bins, extents):
+def get_2D_marginals(
+    df: pd.DataFrame,
+    bins: dict[str,int],
+    extents: dict[str,tuple[float]],
+) -> dict[tuple[str], npt.NDArray[np.uint32]]:
+    """Get all 2D marginal 2D histograms for a data frame.
+
+    Arguments:
+        df (pd.DataFrame): A data-frame with unique column names.
+        bins (dict of tuple of ints): Maps column name to number of bins.
+        extents (dict of tuples of floats): Maps column name to dimension extent (min, max).
+
+    Returns:
+        dict: The counts of data in the evenly spaced bins.
+    """
     return {
         (c0, c1): histogram2D(
             df[c0].to_numpy(),
@@ -74,9 +141,22 @@ def scatterplot_matrix(
     y_labels_offset: float=-0.02,
     **kwargs,
 ) -> None:
+    """
+    Make a scatterplot matrix with 1D histograms on the diagonal and 2D histograms off the diagonal to quickly summarize a data-frame with numeric values.
+
+    Arguments:
+        df (pd.DataFrame): A data-frame with values to summarize.
+        bins (dict or int): Either a number of bins in each dimensions, or a mapping between the column name and the number of bins.
+        imshow_kwargs (dict): Keyword arguments to the off-diagonal plots.
+        plot_kwargs (dict): Keyword arguments to the diagonal plots.
+        show (bool): Show the canvas immediately.
+        y_labels_offset (float): A distance of the y labels from the axis.
+        **kwargs: Other keyword arguments to the plt.subplots function.
+    """
     if isinstance(bins, int):
-        bins = {col: bins for col in df}
-    
+        bins = {col: bins for col in df}    
+    assert set(bins) == set(df.columns), "The keys of bins have to be the same as the columns in the data frame."
+
     extents = {col: min_max(df[col].to_numpy()) for col in df}
     marginals1D = get_1D_marginals(df, bins=bins, extents=extents)
     marginals2D = get_2D_marginals(df, bins=bins, extents=extents)
