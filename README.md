@@ -7,9 +7,12 @@ To make a plot:
 import matplotlib.pyplot as plt
 from kilograms import scatterplot_matrix
 
+# df is your data-frame with uniquely named columns
+# each dimension has a numerical value.
+
 with plt.style.context('dark_background'):
     scatterplot_matrix(
-        df2[extent_cols+["log10_intensity","log10_vol"]],
+        df,
         show=False,
         y_labels_offset=-.2,
     )
