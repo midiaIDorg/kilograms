@@ -75,9 +75,9 @@ def histogram2D(
     result = np.zeros((xx_bins+1, yy_bins+1), dtype=np.uint32)# +1 for as max guardians
     for x,y in zip(xx,yy):
         result[int((x-xx_min)*xx_mult), int((y-yy_min)*yy_mult)] += 1
-    result[ -2, -2] = result[ -1, -1]
-    result[:-1, -2] = result[:-1, -1]
-    result[ -2,:-1] = result[ -1,:-1]
+    result[ -2, -2] += result[ -1, -1]
+    result[:-1, -2] += result[:-1, -1]
+    result[ -2,:-1] += result[ -1,:-1]
     return result[:-1,:-1]
 
 

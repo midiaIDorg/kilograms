@@ -1,4 +1,4 @@
-PROJECT_NAME = midiapipe
+PROJECT_NAME = kilograms
 VE = ve_$(PROJECT_NAME)
 install: clean_ve
 	virtualenv $(VE)
