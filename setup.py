@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(  
     name='kilograms',
     packages=find_packages(),
-    version='0.0.1',
+    version='0.0.2',
     description='Histograms for large data.',
     long_description='Numba based calculation of 1D and 2D histograms for large data..',
     author='MatteoLacki',
