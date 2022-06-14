@@ -1,6 +1,6 @@
 A simple package for making histograms and simple summaries of rather large data-frames.
-Tested to be faster than numpy and fast-histogram.
-I have no time to prove it: DIY!
+For me, it is faster than numpy and fast-histogram.
+But your mileage might vary.
 
 # Usage
 
