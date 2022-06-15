@@ -61,8 +61,38 @@ with plt.style.context('dark_background'):
     fig.show()
 
 with plt.style.context('dark_background'):
-    fig, axs = crossplot(df, np.log10(MS1_cut.intensity), show=False)
-    fig.suptitle("Cross Plot")
+    fig, axs = crossplot(df, yy=np.log10(MS1_cut.intensity), show=False, weights=MS1_cut.peak_count)
+    fig.suptitle("Cross Plot, peak_count weighted")
     fig.show()
 
-# now 
+
+with plt.style.context('dark_background'):
+    fig, axs = scatterplot_matrix(df, show=False, weights=MS1_cut.peak_count)
+    fig.suptitle("Scatterplot Matrix, peak_count weighted")
+    fig.show()
+
+
+
+from kilograms.histogramming import *
+extent = min_max(df.mz_extent.to_numpy())
+
+%%time
+z = histogram1D_slow(
+    df.mz_extent.to_numpy(),
+    extent=extent,
+    bins=100
+)
+
+%%time
+z = histogram1D_fast(
+    df.mz_extent.to_numpy(),
+    extent=extent,
+    bins=100
+)
+
+%%time
+z = histogram1D_safe(
+    df.mz_extent.to_numpy(),
+    extent=extent,
+    bins=100
+)

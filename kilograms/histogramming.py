@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-# ToDo: the float can be a generic numeric type...
+# ToDo:
+# 
 
 @numba.jit(nopython=True)
 def min_max(xx: npt.NDArray[float]) -> tuple[float]:
@@ -28,25 +29,16 @@ def min_max(xx: npt.NDArray[float]) -> tuple[float]:
 
 
 def get_max_extent(*extents):
+    """Given a sequence of (min,max) tuples, find the min of mins and the max of maxes."""
     mins, maxes = zip(*extents)
     return (min(mins), max(maxes))
 
 
-@numba.jit(nopython=True)
-def histogram1D(
+def histogram1D_slow(
     xx: npt.NDArray[float],
     extent: tuple[float],
     bins: int
 ) -> npt.NDArray[np.uint32]:
-    """Make a 1D histogram.
-
-    Arguments:
-        xx (np.array): Data to bin.
-        extent (tuple)
-
-    Returns:
-        np.array: The counts of data in the evenly spaced bins.
-    """
     xx_min, xx_max = extent
     mult = bins / (xx_max - xx_min)
     result = np.zeros(bins+1, dtype=np.uint32)# +1 for as max guardians
@@ -56,23 +48,38 @@ def histogram1D(
     result[bins-1] += result[bins]
     return result[:-1]
 
+histogram1D_modes = {
+    "slow": histogram1D_slow,
+    "fast": numba.jit(nopython=True, cache=True)(histogram1D_slow),
+    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(histogram1D_slow),
+}
 
-@numba.jit(nopython=True)
-def weighted_histogram1D(
+def histogram1D(
     xx: npt.NDArray[float],
-    weights: npt.NDArray[float],
     extent: tuple[float],
-    bins: int
+    bins: int,
+    mode: str="fast",
 ) -> npt.NDArray[np.uint32]:
     """Make a 1D histogram.
 
     Arguments:
         xx (np.array): Data to bin.
-        extent (tuple)
+        extent (tuple): Min and max values of the data.
+        bins (int): The number of bins.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
 
     Returns:
         np.array: The counts of data in the evenly spaced bins.
     """
+    return histogram1D_modes[mode](xx, extent, bins)
+
+
+def weighted_histogram1D_slow(
+    xx: npt.NDArray[float],
+    weights: npt.NDArray[float],
+    extent: tuple[float],
+    bins: int
+) -> npt.NDArray[np.uint32]:
     xx_min, xx_max = extent
     mult = bins / (xx_max - xx_min)
     result = np.zeros(bins+1, dtype=np.uint32)# +1 for as max guardians
@@ -82,23 +89,43 @@ def weighted_histogram1D(
     result[bins-1] += result[bins]
     return result[:-1]
 
-@numba.jit(nopython=True, cache=True)
-def histogram2D(
+
+weighted_histogram1D_modes = {
+    "slow": weighted_histogram1D_slow,
+    "fast": numba.jit(nopython=True, cache=True)(weighted_histogram1D_slow),
+    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(weighted_histogram1D_slow),
+}
+
+
+def weighted_histogram1D(
+    xx: npt.NDArray[float],
+    weights: npt.NDArray[float],
+    extent: tuple[float],
+    bins: int,
+    mode: str="fast",
+) -> npt.NDArray[np.uint32]:
+    """Make a 1D histogram weighted by weights.
+
+    Arguments:
+        xx (np.array): Data to bin.
+        weights (np.array): Typically nonnnegative weights.
+        extent (tuple): Min and max values of the data.
+        bins (int): The number of bins.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
+    Returns:
+        np.array: The counts of data in the evenly spaced bins.
+    """
+    return weighted_histogram1D_modes[mode](xx, weights, extent, bins)
+
+
+
+def histogram2D_slow(
     xx: npt.NDArray[float],
     yy: npt.NDArray[float], 
     extent: tuple[tuple[float]],
     bins: tuple[int],
 ) -> npt.NDArray[float]:
-    """Make a 2D histogram.
-
-    Arguments:
-        xx (np.array): First coordinates of points to bin.
-        yy (np.array): Second coordinates of points to bin.
-        extent (tuple of tuples): A tuple of tuples with the extent of data, first in xx, then in yy. 
-        bins (tuple of ints): The number of bins in xx and in yy.
-    Returns:
-        np.array: The counts of data in the evenly spaced bins.
-    """
     (xx_min, xx_max), (yy_min,yy_max) = extent
     xx_bins, yy_bins = bins
     xx_mult = xx_bins / (xx_max - xx_min)
@@ -112,14 +139,19 @@ def histogram2D(
     return result[:-1,:-1]
 
 
+histogram2D_modes = {
+    "slow": histogram2D_slow,
+    "fast": numba.jit(nopython=True, cache=True)(histogram2D_slow),
+    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(histogram2D_slow),
+}
 
-@numba.jit(nopython=True, cache=True)
-def weighted_histogram2D(
+
+def histogram2D(
     xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    weights: npt.NDArray[float],
+    yy: npt.NDArray[float], 
     extent: tuple[tuple[float]],
     bins: tuple[int],
+    mode: str="fast",
 ) -> npt.NDArray[float]:
     """Make a 2D histogram.
 
@@ -128,9 +160,22 @@ def weighted_histogram2D(
         yy (np.array): Second coordinates of points to bin.
         extent (tuple of tuples): A tuple of tuples with the extent of data, first in xx, then in yy. 
         bins (tuple of ints): The number of bins in xx and in yy.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
     Returns:
         np.array: The counts of data in the evenly spaced bins.
     """
+    return histogram2D_modes[mode](xx, yy, extent, bins)
+
+
+
+def weighted_histogram2D_slow(
+    xx: npt.NDArray[float],
+    yy: npt.NDArray[float],
+    weights: npt.NDArray[float],
+    extent: tuple[tuple[float]],
+    bins: tuple[int],
+) -> npt.NDArray[float]:
     (xx_min, xx_max), (yy_min,yy_max) = extent
     xx_bins, yy_bins = bins
     xx_mult = xx_bins / (xx_max - xx_min)
@@ -144,6 +189,37 @@ def weighted_histogram2D(
     return result[:-1,:-1]
 
 
+weighted_histogram2D_modes = {
+    "slow": weighted_histogram2D_slow,
+    "fast": numba.jit(nopython=True, cache=True)(weighted_histogram2D_slow),
+    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(weighted_histogram2D_slow),
+}
+
+
+def weighted_histogram2D(
+    xx: npt.NDArray[float],
+    yy: npt.NDArray[float],
+    weights: npt.NDArray[float],
+    extent: tuple[tuple[float]],
+    bins: tuple[int],
+    mode: str="fast",
+) -> npt.NDArray[float]:
+    """Make a 2D histogram.
+
+    Arguments:
+        xx (np.array): First coordinates of points to bin.
+        yy (np.array): Second coordinates of points to bin.
+        weights (np.array): Typically nonnnegative weights.
+        extent (tuple of tuples): A tuple of tuples with the extent of data, first in xx, then in yy. 
+        bins (tuple of ints): The number of bins in xx and in yy.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
+    Returns:
+        np.array: The counts of data in the evenly spaced bins.
+    """
+    return weighted_histogram2D_modes[mode](xx, yy, weights, extent, bins)
+
+
 
 def kilogram2D(
     xx: npt.NDArray[float],
@@ -151,6 +227,7 @@ def kilogram2D(
     weights: npt.NDArray[float]|None=None,
     bins: tuple[int]=100,
     extent: tuple[tuple[float]]|None=None,
+    mode: str="fast",
 ) -> npt.NDArray[float]:
     """Make a 2D kilogram-histogram.
 
@@ -159,8 +236,11 @@ def kilogram2D(
     Arguments:
         xx (np.array): First coordinates of points to bin.
         yy (np.array): Second coordinates of points to bin.
+        weights (np.array): Typically nonnnegative weights.
         extent (tuple of tuples): A tuple of tuples with the extent of data, first in xx, then in yy. 
         bins (tuple of ints): The number of bins in xx and in yy.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
     Returns:
         np.array: The counts of data in the evenly spaced bins.
     """
@@ -172,10 +252,10 @@ def kilogram2D(
     if isinstance(bins, int):
         bins = (bins, bins)
     if weights is None:
-        return histogram2D(xx, yy, extent=extent, bins=bins)
+        return histogram2D(xx, yy, extent=extent, bins=bins, mode=mode)
     assert len(weights) == len(xx), "xx, yy, and weights must have the same length."
     weights = np.array(weights)
-    return weighted_histogram2D(xx, yy, weights, extent=extent, bins=bins)
+    return weighted_histogram2D(xx, yy, weights, extent=extent, bins=bins, mode=mode)
 
 
 def get_1D_marginals(
@@ -183,6 +263,7 @@ def get_1D_marginals(
     bins: dict[str,int],
     extents: dict[str,tuple[float]],
     weights: pd.Series|None = None,
+    mode: str="fast",
 ) -> dict[tuple[str], npt.NDArray[np.uint32]]:
     """Get all 1D marginal histograms for a data frame.
 
@@ -190,6 +271,8 @@ def get_1D_marginals(
         df (pd.DataFrame): A data-frame with unique column names.
         bins (dict of tuple of ints): Maps column name to number of bins.
         extents (dict of tuples of floats): Maps column name to dimension extent (min, max).
+        weights (pd.Series or None): Typically nonnnegative weights.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
 
     Returns:
         dict: The counts of data in the evenly spaced bins.
@@ -199,7 +282,8 @@ def get_1D_marginals(
             _col: histogram1D(
                 xx=df[_col].to_numpy(),
                 extent=extents[_col], 
-                bins=bins[_col]
+                bins=bins[_col],
+                mode=mode,
             )
             for _col in df
         }
@@ -211,6 +295,7 @@ def get_1D_marginals(
                 weights=weights.to_numpy(),
                 extent=extents[_col], 
                 bins=bins[_col],
+                mode=mode,
             )
             for _col in df
         }
@@ -221,6 +306,7 @@ def get_2D_marginals(
     bins: dict[str,int],
     extents: dict[str,tuple[float]],
     weights: pd.Series|None = None,
+    mode: str="fast",
 ) -> dict[tuple[str], npt.NDArray[np.uint32]]:
     """Get all 2D marginal 2D histograms for a data frame.
 
@@ -228,6 +314,8 @@ def get_2D_marginals(
         df (pd.DataFrame): A data-frame with unique column names.
         bins (dict of tuple of ints): Maps column name to number of bins.
         extents (dict of tuples of floats): Maps column name to dimension extent (min, max).
+        weights (pd.Series or None): Typically nonnnegative weights.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
 
     Returns:
         dict: The counts of data in the evenly spaced bins.
@@ -239,6 +327,7 @@ def get_2D_marginals(
                 df[c1].to_numpy(),
                 extent=(extents[c0], extents[c1]),
                 bins=(bins[c0], bins[c1]),
+                mode=mode,
             )
             for c0, c1 in itertools.combinations(df, r=2)
         }
@@ -251,6 +340,7 @@ def get_2D_marginals(
                 extent=(extents[c0], extents[c1]),
                 bins=(bins[c0], bins[c1]),
                 weights=weights.to_numpy(),
+                mode=mode,
             )
             for c0, c1 in itertools.combinations(df, r=2)
         }
@@ -264,6 +354,7 @@ def scatterplot_matrix(
     imshow_kwargs: dict={"cmap":"inferno"},
     plot_kwargs: dict={},
     show: bool=True,
+    mode: str="fast",
     # y_labels_offset: float=-0.02,
     **kwargs,
 ) -> None:
@@ -272,10 +363,14 @@ def scatterplot_matrix(
 
     Arguments:
         df (pd.DataFrame): A data-frame with values to summarize.
+        weights (pd.Series or None): Typically nonnnegative weights.
         bins (dict or int): Either a number of bins in each dimensions, or a mapping between the column name and the number of bins.
+        extents (dict of tuples of floats or None): Maps column name to dimension extent (min, max). If not provided (None), will be calculated.
         imshow_kwargs (dict): Keyword arguments to the off-diagonal plots.
         plot_kwargs (dict): Keyword arguments to the diagonal plots.
         show (bool): Show the canvas immediately.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
         **kwargs: Other keyword arguments to the plt.subplots function.
     """
     if isinstance(bins, int):
@@ -294,7 +389,7 @@ def scatterplot_matrix(
         col: (bin_border[:-1] + bin_border[1:]) / 2.0
         for col, bin_border in bin_borders.items()      
     }
-    marginals1D = get_1D_marginals(df, bins=bins, extents=extents, weights=weights)
+    marginals1D = get_1D_marginals(df, bins=bins, extents=extents, weights=weights, mode=mode)
     if len(df.columns) == 1:
         col = df.columns[0]
         plt.plot(
@@ -305,7 +400,7 @@ def scatterplot_matrix(
         if show:
             plt.show()
     else:
-        marginals2D = get_2D_marginals(df, bins=bins, extents=extents, weights=weights)
+        marginals2D = get_2D_marginals(df, bins=bins, extents=extents, weights=weights, mode=mode)
         N = len(df.columns)
         fig, axs = plt.subplots(nrows=N, ncols=N, squeeze=True, **kwargs)
         limits = {}
@@ -355,16 +450,32 @@ def crossdata(
     bins: dict[str,int],
     extents: dict[str,tuple[float]],
     weights: pd.Series|None=None,
+    mode: str="fast",
 ) -> dict[npt.NDArray[np.uint32]]:
+    """
+    Get 2D histograms summarizing the distributions of columns of 'df' and the 'yy' series. 
+    
+    Warning: all of the names should be unique, so that columns of df and the name of the yy series should not repeat.
+
+    Arguments:
+        df (pd.DataFrame): A data-frame with values to summarize.
+        yy (pd.Series): A series with data to cross-histogramize with columns of 'df'.
+        bins (dict): A dictionary of bin sizes per each dimension. Must also contain a value for the 'yy.name'.
+        extents (dict of tuples of floats): Maps column name to dimension extent (min, max).  Must also contain a value for the 'yy.name'.
+        weights (pd.Series or None): An optional series of weights.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+
+    Returns:
+        dict: Mapping between tuples of `df` column name and `yy.name` and the calculated binnings.
+    """
     if weights is None:
-        for col in df:
-            print((extents[col], extents[yy.name]))
         return {
             (col, yy.name): histogram2D(
                 xx=df[col].to_numpy(),
                 yy=yy.to_numpy(),
                 extent=(extents[col], extents[yy.name]),
                 bins=(bins[col], bins[yy.name]),
+                mode=mode,
             )
             for col in df
         }
@@ -376,6 +487,7 @@ def crossdata(
                 extent=(extents[col], extents[yy.name]),
                 bins=(bins[col], bins[yy.name]),
                 weights=weights.to_numpy(),
+                mode=mode,
             ) 
             for col in df
         }
@@ -392,9 +504,30 @@ def crossplot(
     show: bool=True,
     nrows: int=1,
     ncols: int|None=None,
+    mode: str="fast",
     **kwargs,
 ) -> None:
+    """
+    Get a plot with a series of 2D histograms summarizing the distributions of columns of 'df' and the 'yy' series. 
+    
+    Warning: all of the names should be unique, so that columns of df and the name of the yy series should not repeat.
 
+    Arguments:
+        df (pd.DataFrame): A data-frame with values to summarize.
+        yy (pd.Series): A series with data to cross-histogramize with columns of 'df'.
+        weights (pd.Series or None): Typically nonnnegative weights.
+        bins (dict): A dictionary of bin sizes per each dimension. Must also contain a value for the 'yy.name'.
+        extents (dict of tuples of floats): Maps column name to dimension extent (min, max).  Must also contain a value for the 'yy.name'.
+        imshow_kwargs (dict): Keyword arguments to the off-diagonal plots.
+        show (bool): Show the canvas immediately.
+        nrows (int): Number of rows in the plot.
+        ncols (int): Number of columns in the plot.
+        mode (str): The mode of carrying out the comptutatoins: 'fast', 'safe', or 'slow'.
+        **kwargs: Other keyword arguments to the plt.subplots function.
+
+    Returns:
+        dict: Mapping between tuples of `df` column name and `yy.name` and the calculated binnings.
+    """
     assert len(set([*df.columns, yy.name])) == len(df.columns) + 1, "Name of columns of 'df' and that of 'yy' must be unique."
 
     if isinstance(bins, int):
@@ -417,6 +550,7 @@ def crossplot(
         bins=bins,
         extents=extents,
         weights=weights,
+        mode=mode,
     )
 
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, squeeze=True, **kwargs)
@@ -435,3 +569,5 @@ def crossplot(
         fig.show()
 
     return fig, axs
+
+
