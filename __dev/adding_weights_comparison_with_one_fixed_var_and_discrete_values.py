@@ -96,3 +96,34 @@ z = histogram1D_safe(
     extent=extent,
     bins=100
 )
+
+
+# TODO: update the README.md
+
+
+hprs = pd.read_hdf(source/"results.hdf", "hpr_features")
+hprs = get_extents_vol_centers(hprs)
+hprs_cut = cut_df(hprs, **column_quantiles(hprs[extent_cols])).copy()
+hprs_cut[extent_cols]
+
+log10_intensity = np.log10(hprs_cut.intensity)
+
+with plt.style.context('dark_background'):
+    fig, axs = crossplot(
+        hprs_cut[extent_cols],
+        yy=np.log10(MS1_cut.intensity),
+        show=False)
+    fig.suptitle("Cross Plot")
+    fig.show()
+
+peak_count = hprs_cut.peak_count
+
+with plt.style.context('dark_background'):
+    fig, axs = crossplot(
+        hprs_cut[extent_cols],
+        yy=np.log10(MS1_cut.intensity),
+        weights=peak_count,
+        show=False
+    )
+    fig.suptitle("Cross Plot, peak_count weighted.")
+    fig.show()

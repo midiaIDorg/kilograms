@@ -2,7 +2,20 @@ A simple package for making histograms and simple summaries of rather large data
 For me, it is faster than numpy and fast-histogram.
 But your mileage might vary.
 
-# Usage
+# Installation
+
+```{bash}
+pip install kilograms
+```
+
+or 
+
+```{bash}
+pip install git+https://github.com/MatteoLacki/kilograms
+```
+
+
+# Scatterplot Matrix
 
 So, we have some bigger data:
 ```{python3}
@@ -68,5 +81,105 @@ from kilograms import scatterplot_matrix
 with plt.style.context('dark_background'):
     scatterplot_matrix(df, y_labels_offset=-.2)
 ```
-
 ![](https://github.com/MatteoLacki/kilograms/blob/main/scatterplot_matrix.png "Scatterplot Matrix")
+
+Do you have a pd.Series with weights?
+We support that to, check out:
+
+```{python3}
+with plt.style.context('dark_background'):
+    scatterplot_matrix(df, weights=weights, y_labels_offset=-.2)
+```
+
+# Crossplots
+
+Another examplary use case: let us take another dataset with roughly 12 million rows:
+
+```{python3}
+In [97]: hprs_cut[extent_cols]
+Out[97]:
+          mz_extent  inv_ion_mobility_extent  retention_time_extent
+0          0.039250                 0.097748              16.467407
+1          0.036475                 0.107114              16.467407
+2          0.039312                 0.070504              14.114502
+3          0.028103                 0.102347              15.291748
+4          0.039372                 0.095450              14.114304
+...             ...                      ...                    ...
+14845145   0.011898                 0.006939              11.766785
+14845146   0.012180                 0.006939               8.236397
+14845151   0.018146                 0.006939               9.410645
+14845153   0.015214                 0.006939               5.882019
+14845155   0.015426                 0.006939              11.762817
+
+[12114407 rows x 3 columns]
+```
+
+Also, we might have an additional `pd.Series`, say `log10_intensity`:
+```{python3}
+In [103]: log10_intensity
+Out[103]:
+0           5.101457
+1           4.642086
+2           4.046946
+3           3.362281
+4           5.066818
+              ...
+14845145    3.036944
+14845146    3.021195
+14845151    2.814021
+14845153    2.684862
+14845155    2.618048
+Name: intensity, Length: 12114407, dtype: float64
+```
+
+You can plot the 2D marginal distributions with x-axis corresponding to colums of the data frame and y-axis correspoding to `log10_intensities` with:
+
+```{python3}
+with plt.style.context('dark_background'):
+    fig, axs = crossplot(
+        hprs_cut[extent_cols],
+        yy=np.log10(MS1_cut.intensity),
+        show=False)
+    fig.suptitle("Cross Plot")
+    fig.show()
+```
+
+which results in:
+![](https://github.com/MatteoLacki/kilograms/blob/main/crossplot_unweighted.png "Crossplot")
+
+You might also weight the whole distribution.
+Say you want to do it by `peak_count`:
+
+```{python3}
+In [106]: peak_count
+Out[106]:
+0           863
+1           720
+2           277
+3            99
+4           440
+           ...
+14845145     18
+14845146     15
+14845151     13
+14845153      7
+14845155      8
+Name: peak_count, Length: 12114407, dtype: int64
+```
+
+That is as simple as:
+
+```{python3}
+with plt.style.context('dark_background'):
+    fig, axs = crossplot(
+        hprs_cut[extent_cols],
+        yy=np.log10(MS1_cut.intensity),
+        weights=peak_count,
+        show=False
+    )
+    fig.suptitle("Cross Plot, peak_count weighted.")
+    fig.show()
+```
+
+which results in:
+![](https://github.com/MatteoLacki/kilograms/blob/main/crossplot_peak_count_weighted.png "Crossplot")
