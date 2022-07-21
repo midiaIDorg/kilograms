@@ -183,3 +183,14 @@ with plt.style.context('dark_background'):
 
 which results in:
 ![](https://github.com/MatteoLacki/kilograms/blob/main/crossplot_peak_count_weighted.png "Crossplot")
+
+
+# TODO list
+
+* Handle missing values or infinities
+* Better handling of data transformations:
+    * one can pass in and compile (and cache the compilation) of a ![](https://stackoverflow.com/questions/45976662/speed-up-function-that-takes-a-function-as-argument-with-numba, "function").
+    * the ticks and sub-ticks should be modified.
+* Better handling of discrete int-based clustering
+    * use of their natural binning 
+* Overplotting multiple 2D histograms with majority value-based basis.
