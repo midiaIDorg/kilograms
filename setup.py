@@ -1,10 +1,11 @@
 # This Python file uses the following encoding: utf-8
 from setuptools import setup, find_packages
+import glob
 
 setup(  
     name='kilograms',
     packages=find_packages(),
-    version='0.0.3',
+    version='0.0.4',
     description='Histograms for large data.',
     long_description='Numba based calculation of 1D and 2D histograms for large data..',
     author='MatteoLacki',
@@ -26,7 +27,5 @@ setup(
         "matplotlib",
         "pandas",# can remove it later
     ],
-    scripts=[
-        #"bin/run4DFF.py",
-    ]
+    scripts=glob.glob("tools/*")
 )
