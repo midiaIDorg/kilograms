@@ -5,7 +5,7 @@ import glob
 setup(  
     name='kilograms',
     packages=find_packages(),
-    version='0.0.4',
+    version='0.0.5',
     description='Histograms for large data.',
     long_description='Numba based calculation of 1D and 2D histograms for large data..',
     author='MatteoLacki',
@@ -24,6 +24,7 @@ setup(
     install_requires=[
         "numba",
         "numpy",
+        "toml",
         "matplotlib",
         "pandas",# can remove it later
     ],
