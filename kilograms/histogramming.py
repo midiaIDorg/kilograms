@@ -1,11 +1,13 @@
 from __future__ import annotations
+
+import collections
 import itertools
+import matplotlib.pyplot as plt
+import numba
 import numpy as np
 import numpy.typing as npt
-import numba
-import matplotlib.pyplot as plt
 import pandas as pd
-
+import typing
 
 # ToDo:
 #
@@ -354,6 +356,10 @@ def get_2D_marginals(
         }
 
 
+def unique_columns(columns: typing.Iterable[str]) -> bool:
+    return all(v == 1 for v in collections.Counter(columns).values())
+
+
 def scatterplot_matrix(
     df: pd.DataFrame,
     weights: pd.Series | None = None,
@@ -381,6 +387,7 @@ def scatterplot_matrix(
 
         **kwargs: Other keyword arguments to the plt.subplots function.
     """
+    assert unique_columns(df.columns), "Column names must be unique."
     if isinstance(bins, int):
         bins = {col: bins for col in df}
     assert set(bins) == set(
@@ -483,6 +490,7 @@ def crossdata(
     Returns:
         dict: Mapping between tuples of `df` column name and `yy.name` and the calculated binnings.
     """
+    assert unique_columns(df.columns), "Column names must be unique."
     if weights is None:
         return {
             (col, yy.name): histogram2D(
@@ -542,6 +550,7 @@ def crossplot(
     Returns:
         dict: Mapping between tuples of `df` column name and `yy.name` and the calculated binnings.
     """
+    assert unique_columns(df.columns), "Column names must be unique."
     assert (
         len(set([*df.columns, yy.name])) == len(df.columns) + 1
     ), "Name of columns of 'df' and that of 'yy' must be unique."
