@@ -34,6 +34,12 @@ parser.add_argument(
     default=None,
 )
 parser.add_argument(
+    "-title",
+    help="Plot title string.",
+    type=str,
+    default=None,
+)
+parser.add_argument(
     "-width",
     help="Plot width.",
     type=int,
@@ -75,6 +81,10 @@ if __name__ == "__main__":
             )
         else:
             fig, axes = kilograms.scatterplot_matrix(data, show=False)
+
+        if args.title is not None:
+            plt.suptitle(args.title)
+
         if args.output is None:
             plt.show()
         else:
