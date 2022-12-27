@@ -75,12 +75,15 @@ if __name__ == "__main__":
         if args.weights_column_name is not None:
             cols.remove(args.weights_column_name)
             fig, axes = kilograms.scatterplot_matrix(
-                data[list(cols)],
+                data[args.columns],
                 weights=data[args.weights_column_name],
                 show=False,
             )
         else:
-            fig, axes = kilograms.scatterplot_matrix(data, show=False)
+            fig, axes = kilograms.scatterplot_matrix(
+                data[args.columns],
+                show=False,
+            )
 
         if args.title is not None:
             plt.suptitle(args.title)
