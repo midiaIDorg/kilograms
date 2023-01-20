@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
+#!/home/matteo/Projects/MIDIA/veMIDIA/bin/python
 import argparse
-import kilograms
-import pandas as pd
-
-from matplotlib import pyplot as plt
 from pathlib import Path
 
+import kilograms
+import pandas as pd
+from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser(description="Produce kilograms plot.")
 parser.add_argument(
@@ -57,6 +56,17 @@ parser.add_argument(
     type=int,
     default=50,
 )
+parser.add_argument(
+    "--style",
+    help="Style of the plot.",
+    default="dark_background",
+)
+parser.add_argument(
+    "--cmap",
+    help="Color map used for the 2D marginals.",
+    default="inferno",
+)
+
 
 args = parser.parse_args()
 
@@ -71,17 +81,19 @@ if __name__ == "__main__":
         path=args.data_path,
         columns=list(cols),
     )
-    with plt.style.context("dark_background"):
+    with plt.style.context(args.style):
         if args.weights_column_name is not None:
             cols.remove(args.weights_column_name)
             fig, axes = kilograms.scatterplot_matrix(
                 data[args.columns],
                 weights=data[args.weights_column_name],
+                imshow_kwargs={"cmap": args.cmap},
                 show=False,
             )
         else:
             fig, axes = kilograms.scatterplot_matrix(
                 data[args.columns],
+                imshow_kwargs={"cmap": args.cmap},
                 show=False,
             )
 
