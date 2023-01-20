@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import collections
 import itertools
+import typing
+
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-import typing
+from pyparsing import Keyword
 
 # ToDo:
 #
@@ -369,7 +371,7 @@ def scatterplot_matrix(
     plot_kwargs: dict = {},
     show: bool = True,
     mode: str = "fast",
-    # y_labels_offset: float=-0.02,
+    lims: dict | None = None,
     **kwargs,
 ) -> None:
     """
@@ -399,6 +401,12 @@ def scatterplot_matrix(
     assert set(extents) == set(
         df.columns
     ), "The keys of extents have to be the same as the columns in the data frame."
+
+    if lims is not None:
+        for col in lims:
+            assert (
+                col in df.columns
+            ), "The keys of lims have to be a subset of columns of the dataframe."
 
     bin_borders = {
         col: np.linspace(extents[col][0], extents[col][1], bins[col] + 1) for col in df
@@ -442,6 +450,15 @@ def scatterplot_matrix(
                         **imshow_kwargs,
                     )
                     limits[c1] = ax.get_xlim()
+                    if lims is not None:
+                        try:
+                            ax.set_ylim(lims[c0])
+                        except KeyError:
+                            pass
+                        try:
+                            ax.set_xlim(lims[c1])
+                        except KeyError:
+                            pass
                 if j == 0:
                     ax.set_ylabel(c0, loc="center")
                 if i == 0:
@@ -454,6 +471,11 @@ def scatterplot_matrix(
                 **plot_kwargs,
             )
             left, right = limits[col]
+            if lims is not None:
+                try:
+                    left, right = lims[col]
+                except KeyError:
+                    pass
             ax.set_xlim(left, right, auto=True)
 
         # labelx = y_labels_offset  # axes coords

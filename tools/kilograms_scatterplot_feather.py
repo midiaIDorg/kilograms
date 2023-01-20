@@ -66,7 +66,13 @@ parser.add_argument(
     help="Color map used for the 2D marginals.",
     default="inferno",
 )
-
+parser.add_argument(
+    "--lims",
+    nargs=3,
+    action="append",
+    help="Limits in form <name> <left> <right>",
+    default=None,
+)
 
 args = parser.parse_args()
 
@@ -76,6 +82,12 @@ if __name__ == "__main__":
     cols = set(args.columns)
     if args.weights_column_name is not None:
         cols.add(args.weights_column_name)
+
+    lims = args.lims
+    if args.lims is not None:
+        lims = {}
+        for col, left, right in args.lims:
+            lims[col] = (float(left), float(right))
 
     data = pd.read_feather(
         path=args.data_path,
@@ -89,12 +101,14 @@ if __name__ == "__main__":
                 weights=data[args.weights_column_name],
                 imshow_kwargs={"cmap": args.cmap},
                 show=False,
+                lims=lims,
             )
         else:
             fig, axes = kilograms.scatterplot_matrix(
                 data[args.columns],
                 imshow_kwargs={"cmap": args.cmap},
                 show=False,
+                lims=lims,
             )
 
         if args.title is not None:
