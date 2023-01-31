@@ -372,6 +372,8 @@ def scatterplot_matrix(
     show: bool = True,
     mode: str = "fast",
     lims: dict | None = None,
+    y_hist_bottom_lim: float | None = None,
+    common_vlim: bool = False,
     **kwargs,
 ) -> None:
     """
@@ -418,6 +420,12 @@ def scatterplot_matrix(
     marginals1D = get_1D_marginals(
         df, bins=bins, extents=extents, weights=weights, mode=mode
     )
+    vmin = None
+    vmax = None
+    if common_vlim:
+        vmin = 0
+        vmax = np.sum(marginals1D[df.columns[0]])
+
     if len(df.columns) == 1:
         col = df.columns[0]
         plt.plot(
@@ -447,6 +455,8 @@ def scatterplot_matrix(
                         extent=extents[c1] + extents[c0],
                         origin="lower",
                         aspect="auto",
+                        vmin=vmin,
+                        vmax=vmax,
                         **imshow_kwargs,
                     )
                     limits[c1] = ax.get_xlim()
@@ -477,6 +487,8 @@ def scatterplot_matrix(
                 except KeyError:
                     pass
             ax.set_xlim(left, right, auto=True)
+            if y_hist_bottom_lim is not None:
+                ax.set_ylim(bottom=y_hist_bottom_lim)
 
         # labelx = y_labels_offset  # axes coords
         # for j in range(N):

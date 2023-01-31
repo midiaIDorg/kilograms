@@ -73,7 +73,12 @@ parser.add_argument(
     help="Limits in form <name> <left> <right>",
     default=None,
 )
-
+parser.add_argument(
+    "--y_hist_bottom_lim",
+    help="Limits the y axis from below on all histograms",
+    type=float,
+    default=None,
+)
 args = parser.parse_args()
 
 
@@ -102,6 +107,7 @@ if __name__ == "__main__":
                 imshow_kwargs={"cmap": args.cmap},
                 show=False,
                 lims=lims,
+                y_hist_bottom_lim=args.y_hist_bottom_lim,
             )
         else:
             fig, axes = kilograms.scatterplot_matrix(
@@ -109,6 +115,7 @@ if __name__ == "__main__":
                 imshow_kwargs={"cmap": args.cmap},
                 show=False,
                 lims=lims,
+                y_hist_bottom_lim=args.y_hist_bottom_lim,
             )
 
         if args.title is not None:
