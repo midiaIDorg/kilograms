@@ -1,8 +1,9 @@
-#!/home/matteo/Projects/MIDIA/veMIDIA/bin/python
+#!/usr/bin/env python3
 import argparse
 from pathlib import Path
 
 import kilograms
+
 import pandas as pd
 from matplotlib import pyplot as plt
 
