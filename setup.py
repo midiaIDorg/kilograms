@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
-from setuptools import setup, find_packages
 import glob
+
+from setuptools import find_packages, setup
 
 setup(
     name="kilograms",
@@ -30,6 +31,7 @@ setup(
         "matplotlib",
         "pandas",  # can remove it later
         "tables",  # what for? I really don't know
+        "duckdb",
     ],
     scripts=glob.glob("tools/*"),
 )
