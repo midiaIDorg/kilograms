@@ -5,18 +5,18 @@ import itertools
 import typing
 
 import matplotlib.pyplot as plt
-import numba
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from numba import njit
 from pyparsing import Keyword
 
 # ToDo:
 #
 
 
-@numba.jit(nopython=True)
-def min_max(xx: npt.NDArray[float]) -> tuple[float]:
+@njit(nopython=True)
+def min_max(xx: npt.NDArray) -> tuple[float, float]:
     """Establish the extent of data (minimal and maximal values).
 
     Arguments:
@@ -40,7 +40,7 @@ def get_max_extent(*extents):
 
 
 def histogram1D_slow(
-    xx: npt.NDArray[float], extent: tuple[float], bins: int
+    xx: npt.NDArray, extent: tuple[float, float], bins: int
 ) -> npt.NDArray[np.uint32]:
     xx_min, xx_max = extent
     mult = bins / (xx_max - xx_min)
@@ -55,13 +55,13 @@ def histogram1D_slow(
 # todo: there is some copy-paste code to execute with another loop
 histogram1D_modes = {
     "slow": histogram1D_slow,
-    "fast": numba.jit(nopython=True, cache=True)(histogram1D_slow),
-    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(histogram1D_slow),
+    "fast": njit(nopython=True, cache=True)(histogram1D_slow),
+    "safe": njit(nopython=True, cache=True, boundscheck=True)(histogram1D_slow),
 }
 
 
 def histogram1D(
-    xx: npt.NDArray[float],
+    xx: npt.NDArray,
     extent: tuple[float],
     bins: int,
     mode: str = "fast",
@@ -81,7 +81,10 @@ def histogram1D(
 
 
 def weighted_histogram1D_slow(
-    xx: npt.NDArray[float], weights: npt.NDArray[float], extent: tuple[float], bins: int
+    xx: npt.NDArray,
+    weights: npt.NDArray,
+    extent: tuple[float],
+    bins: int,
 ) -> npt.NDArray[np.uint32]:
     xx_min, xx_max = extent
     mult = bins / (xx_max - xx_min)
@@ -95,16 +98,16 @@ def weighted_histogram1D_slow(
 
 weighted_histogram1D_modes = {
     "slow": weighted_histogram1D_slow,
-    "fast": numba.jit(nopython=True, cache=True)(weighted_histogram1D_slow),
-    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(
+    "fast": njit(nopython=True, cache=True)(weighted_histogram1D_slow),
+    "safe": njit(nopython=True, cache=True, boundscheck=True)(
         weighted_histogram1D_slow
     ),
 }
 
 
 def weighted_histogram1D(
-    xx: npt.NDArray[float],
-    weights: npt.NDArray[float],
+    xx: npt.NDArray,
+    weights: npt.NDArray,
     extent: tuple[float],
     bins: int,
     mode: str = "fast",
@@ -125,11 +128,11 @@ def weighted_histogram1D(
 
 
 def histogram2D_slow(
-    xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    extent: tuple[tuple[float]],
-    bins: tuple[int],
-) -> npt.NDArray[float]:
+    xx: npt.NDArray,
+    yy: npt.NDArray,
+    extent: tuple[tuple[float, float], tuple[float, float]],
+    bins: tuple[int, int],
+) -> npt.NDArray:
     (xx_min, xx_max), (yy_min, yy_max) = extent
     xx_bins, yy_bins = bins
     xx_mult = xx_bins / (xx_max - xx_min)
@@ -147,18 +150,18 @@ def histogram2D_slow(
 
 histogram2D_modes = {
     "slow": histogram2D_slow,
-    "fast": numba.jit(nopython=True, cache=True)(histogram2D_slow),
-    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(histogram2D_slow),
+    "fast": njit(nopython=True, cache=True)(histogram2D_slow),
+    "safe": njit(nopython=True, cache=True, boundscheck=True)(histogram2D_slow),
 }
 
 
 def histogram2D(
-    xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    extent: tuple[tuple[float]],
-    bins: tuple[int],
+    xx: npt.NDArray,
+    yy: npt.NDArray,
+    extent: tuple[tuple[float, float], tuple[float, float]],
+    bins: tuple[int, int],
     mode: str = "fast",
-) -> npt.NDArray[float]:
+) -> npt.NDArray:
     """Make a 2D histogram.
 
     Arguments:
@@ -175,12 +178,12 @@ def histogram2D(
 
 
 def weighted_histogram2D_slow(
-    xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    weights: npt.NDArray[float],
-    extent: tuple[tuple[float]],
-    bins: tuple[int],
-) -> npt.NDArray[float]:
+    xx: npt.NDArray,
+    yy: npt.NDArray,
+    weights: npt.NDArray,
+    extent: tuple[tuple[float, float], tuple[float, float]],
+    bins: tuple[int, int],
+) -> npt.NDArray:
     (xx_min, xx_max), (yy_min, yy_max) = extent
     xx_bins, yy_bins = bins
     xx_mult = xx_bins / (xx_max - xx_min)
@@ -198,21 +201,21 @@ def weighted_histogram2D_slow(
 
 weighted_histogram2D_modes = {
     "slow": weighted_histogram2D_slow,
-    "fast": numba.jit(nopython=True, cache=True)(weighted_histogram2D_slow),
-    "safe": numba.jit(nopython=True, cache=True, boundscheck=True)(
+    "fast": njit(nopython=True, cache=True)(weighted_histogram2D_slow),
+    "safe": njit(nopython=True, cache=True, boundscheck=True)(
         weighted_histogram2D_slow
     ),
 }
 
 
 def weighted_histogram2D(
-    xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    weights: npt.NDArray[float],
-    extent: tuple[tuple[float]],
-    bins: tuple[int],
+    xx: npt.NDArray,
+    yy: npt.NDArray,
+    weights: npt.NDArray,
+    extent: tuple[tuple[float, float], tuple[float, float]],
+    bins: tuple[int, int],
     mode: str = "fast",
-) -> npt.NDArray[float]:
+) -> npt.NDArray:
     """Make a 2D histogram.
 
     Arguments:
@@ -230,13 +233,13 @@ def weighted_histogram2D(
 
 
 def kilogram2D(
-    xx: npt.NDArray[float],
-    yy: npt.NDArray[float],
-    weights: npt.NDArray[float] | None = None,
-    bins: tuple[int] = 100,
-    extent: tuple[tuple[float]] | None = None,
+    xx: npt.NDArray,
+    yy: npt.NDArray,
+    weights: npt.NDArray | None = None,
+    bins: int | tuple[int, int] = 100,
+    extent: tuple[tuple[float, float], tuple[float, float]] | None = None,
     mode: str = "fast",
-) -> npt.NDArray[float]:
+) -> npt.NDArray:
     """Make a 2D kilogram-histogram.
 
     A convenience wrapper around histogram2D.
@@ -507,7 +510,7 @@ def crossdata(
     extents: dict[str, tuple[float]],
     weights: pd.Series | None = None,
     mode: str = "fast",
-) -> dict[npt.NDArray[np.uint32]]:
+) -> dict[str, npt.NDArray[np.uint32]]:
     """
     Get 2D histograms summarizing the distributions of columns of 'df' and the 'yy' series.
 

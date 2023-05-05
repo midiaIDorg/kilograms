@@ -1,11 +1,12 @@
+import cmath
 import functools
+
 import numba
 import numpy as np
 import numpy.typing as npt
-import cmath
 
 
-@numba.jit
+@numba.njit
 def min_strictly_above_threshold(xx, threshold=0.0):
     res = cmath.inf
     for x in xx:
