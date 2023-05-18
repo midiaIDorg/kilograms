@@ -55,8 +55,8 @@ def histogram1D_slow(
 # todo: there is some copy-paste code to execute with another loop
 histogram1D_modes = {
     "slow": histogram1D_slow,
-    "fast": njit(nopython=True, cache=True)(histogram1D_slow),
-    "safe": njit(nopython=True, cache=True, boundscheck=True)(histogram1D_slow),
+    "fast": njit(cache=True)(histogram1D_slow),
+    "safe": njit(cache=True, boundscheck=True)(histogram1D_slow),
 }
 
 
@@ -98,10 +98,8 @@ def weighted_histogram1D_slow(
 
 weighted_histogram1D_modes = {
     "slow": weighted_histogram1D_slow,
-    "fast": njit(nopython=True, cache=True)(weighted_histogram1D_slow),
-    "safe": njit(nopython=True, cache=True, boundscheck=True)(
-        weighted_histogram1D_slow
-    ),
+    "fast": njit(cache=True)(weighted_histogram1D_slow),
+    "safe": njit(cache=True, boundscheck=True)(weighted_histogram1D_slow),
 }
 
 
@@ -150,8 +148,8 @@ def histogram2D_slow(
 
 histogram2D_modes = {
     "slow": histogram2D_slow,
-    "fast": njit(nopython=True, cache=True)(histogram2D_slow),
-    "safe": njit(nopython=True, cache=True, boundscheck=True)(histogram2D_slow),
+    "fast": njit(cache=True)(histogram2D_slow),
+    "safe": njit(cache=True, boundscheck=True)(histogram2D_slow),
 }
 
 
@@ -201,10 +199,8 @@ def weighted_histogram2D_slow(
 
 weighted_histogram2D_modes = {
     "slow": weighted_histogram2D_slow,
-    "fast": njit(nopython=True, cache=True)(weighted_histogram2D_slow),
-    "safe": njit(nopython=True, cache=True, boundscheck=True)(
-        weighted_histogram2D_slow
-    ),
+    "fast": njit(cache=True)(weighted_histogram2D_slow),
+    "safe": njit(cache=True, boundscheck=True)(weighted_histogram2D_slow),
 }
 
 
