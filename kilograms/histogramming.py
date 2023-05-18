@@ -15,7 +15,7 @@ from pyparsing import Keyword
 #
 
 
-@njit(nopython=True)
+@njit
 def min_max(xx: npt.NDArray) -> tuple[float, float]:
     """Establish the extent of data (minimal and maximal values).
 
