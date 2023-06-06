@@ -9,10 +9,12 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from numba import njit
-from pyparsing import Keyword
 
-# ToDo:
-#
+# TODO:
+# get a script that accepts calculated data and plots those
+# likely a class that consumes inputs and makes histograms on the flight: map-reduce???
+# also, there is quite a lot of spaghetti code below
+# and missing usages of types
 
 
 @njit
