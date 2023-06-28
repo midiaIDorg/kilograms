@@ -3,7 +3,6 @@ import argparse
 from pathlib import Path
 
 import kilograms
-
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -84,7 +83,6 @@ args = parser.parse_args()
 
 
 if __name__ == "__main__":
-
     cols = set(args.columns)
     if args.weights_column_name is not None:
         cols.add(args.weights_column_name)
