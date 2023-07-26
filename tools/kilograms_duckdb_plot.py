@@ -65,6 +65,12 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument("--transparent", action="store_true")
+parser.add_argument(
+    "--y_hist_bottom_lim",
+    help="Set the lower level for the diagonal histograms.",
+    type=float,
+    default=0,
+)
 
 
 args = parser.parse_args()
