@@ -1,7 +1,10 @@
 import itertools
+import pathlib
 
+import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from .histogramming import scatterplot_matrix
@@ -9,26 +12,26 @@ from .histogramming import scatterplot_matrix
 
 def simple_kilogram_plot(
     data,
-    show=False,
-    path="",
-    y_hist_bottom_lim=0,
-    title="",
-    width=10,
-    height=10,
-    dpi=100,
-    style="dark_background",
+    show: bool = False,
+    path: pathlib.Path | str = "",
+    y_hist_bottom_lim: float = 0,
+    title: str = "",
+    width: int = 10,
+    height: int = 10,
+    dpi: int = 100,
+    style: str = "dark_background",
     **kwargs,
-):
+) -> tuple[matplotlib.figure.Figure, npt.NDArray]:
     kwargs["y_hist_bottom_lim"] = y_hist_bottom_lim
     with plt.style.context(style):
         fig, axes = scatterplot_matrix(data, **kwargs, show=False)
         if title:
             plt.suptitle(title)
-        fig.set_size_inches(width, height)
-        if path != "":
-            plt.savefig(path, dpi=dpi)
         if show:
             plt.show()
+        if path != "":
+            fig.set_size_inches(width, height)
+            plt.savefig(path, dpi=dpi)
         if path != "" or show:
             plt.close()
         return fig, axes
@@ -36,13 +39,13 @@ def simple_kilogram_plot(
 
 def plot_histograms(
     bins,
-    path="",
-    title="",
-    y_hist_bottom_lim=0,
-    width=10,
-    height=10,
-    dpi=100,
-    style="dark_background",
+    path: pathlib.Path | str = "",
+    title: str = "",
+    y_hist_bottom_lim: float = 0,
+    width: int = 10,
+    height: int = 10,
+    dpi: int = 100,
+    style: str = "dark_background",
     **data,
 ):
     mids = (bins[1:] + bins[:-1]) / 2
@@ -62,8 +65,16 @@ def plot_histograms(
 
 
 def overplot_grid_on_half_of_kilogram_scatterplot(
-    grid: pd.DataFrame, fig, axes, show: bool = True, **kwargs
-) -> None:
+    grid: pd.DataFrame,
+    fig,
+    axes,
+    show: bool = True,
+    path: pathlib.Path | str = "",
+    width: int = 10,
+    height: int = 10,
+    dpi: int = 100,
+    **kwargs,
+) -> tuple[matplotlib.figure.Figure, npt.NDArray]:
     for (i, dim_i), (j, dim_j) in itertools.combinations(
         enumerate(grid.columns),
         r=2,
@@ -71,3 +82,9 @@ def overplot_grid_on_half_of_kilogram_scatterplot(
         axes[i, j].scatter(grid[dim_j], grid[dim_i], **kwargs)
     if show:
         fig.show()
+    if path != "":
+        fig.set_size_inches(width, height)
+        plt.savefig(path, dpi=dpi)
+    if path != "" or show:
+        plt.close()
+    return fig, axes

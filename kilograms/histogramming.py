@@ -4,6 +4,7 @@ import collections
 import itertools
 import typing
 
+import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
@@ -376,7 +377,7 @@ def scatterplot_matrix(
     y_hist_bottom_lim: float | None = None,
     common_vlim: bool = False,
     **kwargs,
-) -> None:
+) -> tuple[matplotlib.figure.Figure, npt.NDArray]:
     """
     Make a scatterplot matrix with 1D histograms on the diagonal and 2D histograms off the diagonal to quickly summarize a data-frame with numeric values.
 
