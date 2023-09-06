@@ -86,6 +86,7 @@ if __name__ == "__main__":
             imshow_kwargs={"cmap": args.cmap},
             show=False,
             lims=args.lims,
+            constrained_layout=True,
         )
         if args.title is not None:
             plt.suptitle(args.title)
