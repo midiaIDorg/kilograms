@@ -24,7 +24,12 @@ def simple_kilogram_plot(
 ) -> tuple[matplotlib.figure.Figure, npt.NDArray]:
     kwargs["y_hist_bottom_lim"] = y_hist_bottom_lim
     with plt.style.context(style):
-        fig, axes = scatterplot_matrix(data, **kwargs, show=False)
+        fig, axes = scatterplot_matrix(
+            data,
+            **kwargs,
+            show=False,
+            constrained_layout=True,
+        )
         if title:
             plt.suptitle(title)
         if show:
