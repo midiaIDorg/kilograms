@@ -72,7 +72,7 @@ parser.add_argument(
     default=0.5,
 )
 parser.add_argument(
-    "-dpi",
+    "--dpi",
     help="Plot dpi.",
     type=int,
     default=100,
