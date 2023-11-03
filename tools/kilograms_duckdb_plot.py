@@ -87,6 +87,7 @@ if __name__ == "__main__":
             show=False,
             lims=args.lims,
             constrained_layout=True,
+            y_hist_bottom_lim=args.y_hist_bottom_lim,
         )
         if args.title is not None:
             plt.suptitle(args.title)
