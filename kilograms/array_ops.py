@@ -1,5 +1,6 @@
 import cmath
 import functools
+import math
 
 import numba
 import numpy as np
@@ -30,3 +31,15 @@ def counter_dedup(hpr_datasets):
             intensities = np.fromiter(counts.keys(), dtype=np.uint32, count=len(counts))
             i = np.argsort(tofs)
             yield scan_No, tofs[i], intensities[i]
+
+
+@numba.njit
+def minmax(xx):
+    _min = math.inf
+    _max = -math.inf
+    for x in xx:
+        if x <= _min:
+            _min = x
+        if x >= _max:
+            _max = x
+    return _min, _max
