@@ -90,174 +90,171 @@ else:
     args = parser.parse_args()
 
 
-op = opentimspy.OpenTIMS(args.rawdata_path)
+if __name__ == "__main__":
+    op = opentimspy.OpenTIMS(args.rawdata_path)
 
-frames = op.ms1_frames
-if args.ms_level == 2:
-    frames = op.ms2_frames
+    frames = op.ms1_frames
+    if args.ms_level == 2:
+        frames = op.ms2_frames
 
+    def round_up(x: float | int, rounding: int) -> int:
+        return ceil(x // rounding) * rounding
 
-def round_up(x: float | int, rounding: int) -> int:
-    return ceil(x // rounding) * rounding
+    max_scan = op.max_scan
+    max_tof = round_up(op.mz_to_tof(op.max_mz, frames[[0]])[0], args.tof_rounding)
+    sizes = {
+        "frame": len(frames),
+        "scan": max_scan,
+        "tof": max_tof // args.tof_rounding,
+    }
 
+    marginals2D = {
+        (c0, c1): np.zeros(shape=(s0, s1), dtype=np.uint32)
+        for (c0, s0), (c1, s1) in itertools.combinations(sizes.items(), 2)
+    }
 
-max_scan = op.max_scan
-max_tof = round_up(op.mz_to_tof(op.max_mz, frames[[0]])[0], args.tof_rounding)
-sizes = {
-    "frame": len(frames),
-    "scan": max_scan,
-    "tof": max_tof // args.tof_rounding,
-}
+    @numba.njit
+    def add_sparse_array_to_full(arr, xx, yy, values):
+        for x, y, v in zip(xx, yy, values):
+            arr[x, y] += v
 
+    if args.verbose:
+        print("Calculating 2D marginal distributions of raw events.")
 
-marginals2D = {
-    (c0, c1): np.zeros(shape=(s0, s1), dtype=np.uint32)
-    for (c0, s0), (c1, s1) in itertools.combinations(sizes.items(), 2)
-}
-
-
-@numba.njit
-def add_sparse_array_to_full(arr, xx, yy, values):
-    for x, y, v in zip(xx, yy, values):
-        arr[x, y] += v
-
-
-if args.verbose:
-    print("Calculating 2D marginal distributions of raw events.")
-
-# frame_idx, frame = 0,1
-for frame_idx, frame in enumerate(tqdm(frames)):
-    tofs, scans, intensities = op.query(
-        frame, columns=("tof", "scan", "intensity")
-    ).values()
-    frame_idxs = np.full(shape=tofs.shape, fill_value=frame_idx)
-    tof_idxs = tofs // args.tof_rounding
-    add_sparse_array_to_full(
-        marginals2D[("frame", "scan")],
-        xx=frame_idxs,
-        yy=scans,
-        values=intensities,
-    )
-    add_sparse_array_to_full(
-        marginals2D[("frame", "tof")],
-        xx=frame_idxs,
-        yy=tof_idxs,
-        values=intensities,
-    )
-    add_sparse_array_to_full(
-        marginals2D[("scan", "tof")],
-        xx=scans,
-        yy=tof_idxs,
-        values=intensities,
-    )
-
-intensity_transformations = {
-    ("frame", "scan"): np.sqrt,
-    ("frame", "tof"): np.log1p,
-    ("scan", "tof"): np.log1p,
-}
-
-if args.verbose:
-    print("Making marginals1D.")
-
-marginals1D = {
-    "frame": marginals2D[("frame", "scan")].sum(axis=1),
-    "scan": marginals2D[("frame", "scan")].sum(axis=0),
-    "tof": marginals2D[("scan", "tof")].sum(axis=0),
-}
-
-axes = {
-    "frame": frames,
-    "scan": np.arange(0, max_scan, 1),
-    "tof": np.arange(0, max_tof, args.tof_rounding),
-}
-
-axes["retention_time"] = op.frame2retention_time(axes["frame"])
-axes["inv_ion_mobility"] = op.scan_to_inv_ion_mobility(axes["scan"], frames[[0]])
-axes["mz"] = op.tof_to_mz(axes["tof"], frames[[0]])
-
-physical_to_index = {
-    "retention_time": "frame",
-    "inv_ion_mobility": "scan",
-    "mz": "tof",
-}
-index_to_physical = {i: p for p, i in physical_to_index.items()}
-
-
-interpolator_kwargs = {
-    "bounds_error": False,
-    "fill_value": 0,
-}
-
-##TODO: finish off non-index dimensions.
-
-# interpolator = partial(RegularGridInterpolator, **interpolator_kwargs)
-# interpolations = {
-#     (c0, c1): interpolator(
-#         (axes[c0], axes[c1]),
-#         intensities,
-#     )
-#     for (c0, c1), intensities in marginals2D.items()
-# }
-# for i0, i1 in list(interpolations):
-#     c0 = index_to_physical[i0]
-#     c1 = index_to_physical[i1]
-#     interpolations[(c0, c1)] = interpolator(
-#         (
-#             axes[c0],
-#             axes[c1],
-#         ),
-#         marginals2D[(i0, i1)],
-#     )
-
-# for i0, intensities in marginals1D.items():
-#     interpolations[i0] = interpolator((axes[i0],), intensities)
-#     c0 = index_to_physical[i0]
-#     interpolations[c0] = interpolator((axes[c0],), intensities)
-
-extents = {c: [ax.min().round(4), ax.max().round(4)] for c, ax in axes.items()}
-
-imshow_kwargs = dict(
-    origin="lower",
-    aspect="auto",
-    vmin=0,
-    cmap="inferno",
-)
-
-max_intensity = max(map(np.max, marginals2D.values()))
-
-for (i0, i1), intensities in marginals2D.items():
-    transform = intensity_transformations[(i0, i1)]
-    plt.imshow(
-        transform(intensities),
-        extent=extents[i0] + extents[i1],
-        **imshow_kwargs,
-    )
-    plt.xlabel(i0)
-    plt.ylabel(i1)
-    plt.title(f"{args.rawdata_path.name}: {transform.__name__}(intensity)")
-    if args.output is None:
-        plt.show()
-    else:
-        plt.savefig(
-            args.output / f"{i0}_{i1}.pdf", dpi=args.dpi, transparent=args.transparent
+    # frame_idx, frame = 0,1
+    for frame_idx, frame in enumerate(tqdm(frames)):
+        tofs, scans, intensities = op.query(
+            frame, columns=("tof", "scan", "intensity")
+        ).values()
+        frame_idxs = np.full(shape=tofs.shape, fill_value=frame_idx)
+        tof_idxs = tofs // args.tof_rounding
+        add_sparse_array_to_full(
+            marginals2D[("frame", "scan")],
+            xx=frame_idxs,
+            yy=scans,
+            values=intensities,
         )
-    plt.close()
+        add_sparse_array_to_full(
+            marginals2D[("frame", "tof")],
+            xx=frame_idxs,
+            yy=tof_idxs,
+            values=intensities,
+        )
+        add_sparse_array_to_full(
+            marginals2D[("scan", "tof")],
+            xx=scans,
+            yy=tof_idxs,
+            values=intensities,
+        )
+
+    intensity_transformations = {
+        ("frame", "scan"): np.sqrt,
+        ("frame", "tof"): np.log1p,
+        ("scan", "tof"): np.log1p,
+    }
+
+    if args.verbose:
+        print("Making marginals1D.")
+
+    marginals1D = {
+        "frame": marginals2D[("frame", "scan")].sum(axis=1),
+        "scan": marginals2D[("frame", "scan")].sum(axis=0),
+        "tof": marginals2D[("scan", "tof")].sum(axis=0),
+    }
+
+    axes = {
+        "frame": frames,
+        "scan": np.arange(0, max_scan, 1),
+        "tof": np.arange(0, max_tof, args.tof_rounding),
+    }
+
+    axes["retention_time"] = op.frame2retention_time(axes["frame"])
+    axes["inv_ion_mobility"] = op.scan_to_inv_ion_mobility(axes["scan"], frames[[0]])
+    axes["mz"] = op.tof_to_mz(axes["tof"], frames[[0]])
+
+    physical_to_index = {
+        "retention_time": "frame",
+        "inv_ion_mobility": "scan",
+        "mz": "tof",
+    }
+    index_to_physical = {i: p for p, i in physical_to_index.items()}
+
+    interpolator_kwargs = {
+        "bounds_error": False,
+        "fill_value": 0,
+    }
+
     ##TODO: finish off non-index dimensions.
 
-    # c0 = index_to_physical[i0]
-    # c1 = index_to_physical[i1]
-    # interpolation = interpolations[(c0, c1)]
-    # interpolated_intensities = interpolation(
-    #     tuple(np.meshgrid(axes[c0], axes[c1], indexing="ij", sparse=True))
-    # )
+    # interpolator = partial(RegularGridInterpolator, **interpolator_kwargs)
+    # interpolations = {
+    #     (c0, c1): interpolator(
+    #         (axes[c0], axes[c1]),
+    #         intensities,
+    #     )
+    #     for (c0, c1), intensities in marginals2D.items()
+    # }
+    # for i0, i1 in list(interpolations):
+    #     c0 = index_to_physical[i0]
+    #     c1 = index_to_physical[i1]
+    #     interpolations[(c0, c1)] = interpolator(
+    #         (
+    #             axes[c0],
+    #             axes[c1],
+    #         ),
+    #         marginals2D[(i0, i1)],
+    #     )
 
-    # plt.imshow(
-    #     transform(interpolated_intensities),
-    #     extent=extents[c0] + extents[c1],
-    #     **imshow_kwargs,
-    # )
-    # plt.xlabel(c0)
-    # plt.ylabel(c1)
-    # plt.title(f"{transform.__name__}(intensity)")
-    # plt.show()
+    # for i0, intensities in marginals1D.items():
+    #     interpolations[i0] = interpolator((axes[i0],), intensities)
+    #     c0 = index_to_physical[i0]
+    #     interpolations[c0] = interpolator((axes[c0],), intensities)
+
+    extents = {c: [ax.min().round(4), ax.max().round(4)] for c, ax in axes.items()}
+
+    imshow_kwargs = dict(
+        origin="lower",
+        aspect="auto",
+        vmin=0,
+        cmap="inferno",
+    )
+
+    max_intensity = max(map(np.max, marginals2D.values()))
+
+    for (i0, i1), intensities in marginals2D.items():
+        transform = intensity_transformations[(i0, i1)]
+        plt.imshow(
+            transform(intensities),
+            extent=extents[i0] + extents[i1],
+            **imshow_kwargs,
+        )
+        plt.xlabel(i0)
+        plt.ylabel(i1)
+        plt.title(f"{args.rawdata_path.name}: {transform.__name__}(intensity)")
+        if args.output is None:
+            plt.show()
+        else:
+            plt.savefig(
+                args.output / f"{i0}_{i1}.pdf",
+                dpi=args.dpi,
+                transparent=args.transparent,
+            )
+        plt.close()
+        ##TODO: finish off non-index dimensions.
+
+        # c0 = index_to_physical[i0]
+        # c1 = index_to_physical[i1]
+        # interpolation = interpolations[(c0, c1)]
+        # interpolated_intensities = interpolation(
+        #     tuple(np.meshgrid(axes[c0], axes[c1], indexing="ij", sparse=True))
+        # )
+
+        # plt.imshow(
+        #     transform(interpolated_intensities),
+        #     extent=extents[c0] + extents[c1],
+        #     **imshow_kwargs,
+        # )
+        # plt.xlabel(c0)
+        # plt.ylabel(c1)
+        # plt.title(f"{transform.__name__}(intensity)")
+        # plt.show()
