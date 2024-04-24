@@ -15,7 +15,7 @@ from kilograms.histogramming import histogram1D, histogram2D, min_max
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", 5)
 
-if True:
+if False:
     args = SimpleNamespace(
         tables=[
             Path(
