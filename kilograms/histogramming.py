@@ -685,12 +685,13 @@ def save_1D_histograms(
     folder: str | Path | None = None,
     show: bool = False,
     silent: bool = False,
-    prefix: str = "hist1D_",
+    prefix: str = "",
+    suffix: str = "",
     **kwargs,
 ):
     for column in scatterplot_data["counts1D"]:
         if not silent:
-            print(f"Saving `hist1D_{column}.pdf`.")
+            print(f"Saving `{prefix}{column}{suffix}.pdf`.")
         plt.plot(
             scatterplot_data["bin_centers"][column],
             scatterplot_data["counts1D"][column],
@@ -702,7 +703,7 @@ def save_1D_histograms(
         else:
             if folder is not None:
                 folder = Path(folder)
-                plt.savefig(folder / f"{prefix}{column}.pdf", **kwargs)
+                plt.savefig(folder / f"{prefix}{column}{suffix}.pdf", **kwargs)
         plt.close()
 
 
@@ -711,13 +712,14 @@ def save_2D_histograms(
     folder: str | Path | None = None,
     show: bool = False,
     silent: bool = False,
-    prefix: str = "hist2D_",
+    prefix: str = "",
+    suffix: str = "",
     imshow_kwargs: dict = {},
     **kwargs,
 ):
     for column_hor, column_ver in scatterplot_data["counts2D"]:
         if not silent:
-            print(f"Saving `hist2D_{column_hor}_{column_ver}.pdf`.")
+            print(f"Saving `{prefix}{column_hor}_{column_ver}{suffix}.pdf`.")
 
         dim_bins = scatterplot_data["dim_bins"]
 
@@ -736,7 +738,9 @@ def save_2D_histograms(
         else:
             if folder is not None:
                 folder = Path(folder)
-                plt.savefig(folder / f"{prefix}{column_hor}_{column_ver}.pdf", **kwargs)
+                plt.savefig(
+                    folder / f"{prefix}{column_hor}_{column_ver}{suffix}.pdf", **kwargs
+                )
         plt.close()
 
 
