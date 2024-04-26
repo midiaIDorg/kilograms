@@ -3,6 +3,7 @@ from __future__ import annotations
 import collections
 import itertools
 import typing
+from pathlib import Path
 
 import matplotlib.figure
 import matplotlib.pyplot as plt
@@ -634,3 +635,119 @@ def crossplot(
         fig.show()
 
     return fig, axs
+
+
+def get_scatterplot_data(
+    df: pd.DataFrame,
+    bin_cnt: int = 100,
+    _extent_mult: float = 0.01,
+) -> dict:
+    data = {c: df[c].to_numpy() for c in df.columns}
+    get_bin_centers = lambda xx: (xx[1:] + xx[:-1]) / 2.0
+
+    dim_bins = {}
+    bin_centers = {}
+    counts1D = {}
+    for column in data:
+        _min, _max = min_max(data[column])
+        _extent = _max - _min
+        _min -= _extent * _extent_mult
+        _max += _extent * _extent_mult
+        dim_bins[column] = np.linspace(_min, _max, bin_cnt + 1)
+        bin_centers[column] = get_bin_centers(dim_bins[column])
+        counts1D[column] = histogram1D(
+            xx=data[column],
+            extent=(_min, _max),
+            bins=bin_cnt,
+        )
+    counts2D = {}
+    for column_hor, column_ver in itertools.combinations(data, r=2):
+        counts2D[(column_hor, column_ver)] = histogram2D(
+            xx=data[column_hor],
+            yy=data[column_ver],
+            extent=(dim_bins[column_hor][[0, -1]], dim_bins[column_ver][[0, -1]]),
+            bins=(bin_cnt, bin_cnt),
+        )
+
+    return dict(
+        counts1D=counts1D,
+        counts2D=counts2D,
+        dim_bins=dim_bins,
+        bin_centers=bin_centers,
+    )
+
+
+# scatterplot_data = get_scatterplot_data(df = edge_stats, bin_cnt = 100)
+
+
+def save_1D_histograms(
+    scatterplot_data: dict,
+    folder: str | Path | None = None,
+    show: bool = False,
+    silent: bool = False,
+    prefix: str = "hist1D_",
+    **kwargs,
+):
+    for column in scatterplot_data["counts1D"]:
+        if not silent:
+            print(f"Saving `hist1D_{column}.pdf`.")
+        plt.plot(
+            scatterplot_data["bin_centers"][column],
+            scatterplot_data["counts1D"][column],
+        )
+        plt.xlabel(column)
+        plt.ylabel("count")
+        if show:
+            plt.show()
+        else:
+            if folder is not None:
+                folder = Path(folder)
+                plt.savefig(folder / f"{prefix}{column}.pdf", **kwargs)
+        plt.close()
+
+
+def save_2D_histograms(
+    scatterplot_data: dict,
+    folder: str | Path | None = None,
+    show: bool = False,
+    silent: bool = False,
+    prefix: str = "hist2D_",
+    imshow_kwargs: dict = {},
+    **kwargs,
+):
+    for column_hor, column_ver in scatterplot_data["counts2D"]:
+        if not silent:
+            print(f"Saving `hist2D_{column_hor}_{column_ver}.pdf`.")
+
+        dim_bins = scatterplot_data["dim_bins"]
+
+        plt.imshow(
+            scatterplot_data["counts2D"][(column_hor, column_ver)],
+            extent=list(dim_bins[column_hor][[0, -1]])
+            + list(dim_bins[column_ver][[0, -1]]),
+            origin="lower",
+            aspect="auto",
+            **imshow_kwargs,
+        )
+        plt.xlabel(column_hor)
+        plt.ylabel(column_ver)
+        if show:
+            plt.show()
+        else:
+            if folder is not None:
+                folder = Path(folder)
+                plt.savefig(folder / f"{prefix}{column_hor}_{column_ver}.pdf", **kwargs)
+        plt.close()
+
+
+# save_1D_histograms(
+#     scatterplot_data,
+#     folder="/tmp/testplots",
+#     dpi=100,
+# )
+
+# save_2D_histograms(
+#     scatterplot_data,
+#     folder="/tmp/testplots",
+#     dpi=100,
+# )
