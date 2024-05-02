@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import itertools
+import multiprocessing
 import typing
 from pathlib import Path
 
@@ -687,6 +688,7 @@ def save_1D_histograms(
     silent: bool = False,
     prefix: str = "",
     suffix: str = "",
+    title: str = "",
     **kwargs,
 ):
     for column in scatterplot_data["counts1D"]:
@@ -698,6 +700,9 @@ def save_1D_histograms(
         )
         plt.xlabel(column)
         plt.ylabel("count")
+        plt.ylim(bottom=0)
+        if title:
+            plt.title(title)
         if show:
             plt.show()
         else:
@@ -705,6 +710,9 @@ def save_1D_histograms(
                 folder = Path(folder)
                 plt.savefig(folder / f"{prefix}{column}{suffix}.pdf", **kwargs)
         plt.close()
+
+
+# def plot2D_histogram(column_hor, column_ver, )
 
 
 def save_2D_histograms(
@@ -715,8 +723,14 @@ def save_2D_histograms(
     prefix: str = "",
     suffix: str = "",
     imshow_kwargs: dict = {},
+    both_diagonals: bool = True,
+    title: str = "",
+    process_cnt: int = multiprocessing.cpu_count(),
     **kwargs,
 ):
+    # scatterplot_data = _edge_features_aggregates
+    # column_hor = "frame_correlation"
+    # column_ver = "scan_wasserstein"
     for column_hor, column_ver in scatterplot_data["counts2D"]:
         if not silent:
             print(f"Saving `{prefix}{column_hor}_{column_ver}{suffix}.pdf`.")
@@ -724,12 +738,12 @@ def save_2D_histograms(
         dim_bins = scatterplot_data["dim_bins"]
 
         plt.imshow(
-            scatterplot_data["counts2D"][(column_hor, column_ver)],
+            scatterplot_data["counts2D"][(column_hor, column_ver)].T,
             extent=list(dim_bins[column_hor][[0, -1]])
             + list(dim_bins[column_ver][[0, -1]]),
             origin="lower",
             aspect="auto",
-            **imshow_kwargs,
+            # **imshow_kwargs,
         )
         plt.xlabel(column_hor)
         plt.ylabel(column_ver)
@@ -742,6 +756,28 @@ def save_2D_histograms(
                     folder / f"{prefix}{column_hor}_{column_ver}{suffix}.pdf", **kwargs
                 )
         plt.close()
+
+        if both_diagonals:
+            plt.imshow(
+                scatterplot_data["counts2D"][(column_hor, column_ver)],
+                extent=list(dim_bins[column_ver][[0, -1]])
+                + list(dim_bins[column_hor][[0, -1]]),
+                origin="lower",
+                aspect="auto",
+                **imshow_kwargs,
+            )
+            plt.xlabel(column_ver)
+            plt.ylabel(column_hor)
+            if show:
+                plt.show()
+            else:
+                if folder is not None:
+                    folder = Path(folder)
+                    plt.savefig(
+                        folder / f"{prefix}{column_ver}_{column_hor}{suffix}.pdf",
+                        **kwargs,
+                    )
+            plt.close()
 
 
 # save_1D_histograms(
