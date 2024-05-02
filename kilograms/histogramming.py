@@ -715,6 +715,7 @@ def save_1D_histograms(
 # def plot2D_histogram(column_hor, column_ver, )
 
 
+# speed up su
 def save_2D_histograms(
     scatterplot_data: dict,
     folder: str | Path | None = None,
@@ -725,7 +726,8 @@ def save_2D_histograms(
     imshow_kwargs: dict = {},
     both_diagonals: bool = True,
     title: str = "",
-    process_cnt: int = multiprocessing.cpu_count(),
+    # process_cnt: int = multiprocessing.cpu_count(),
+    values_to_nans: float | None = None,
     **kwargs,
 ):
     # scatterplot_data = _edge_features_aggregates
@@ -737,8 +739,13 @@ def save_2D_histograms(
 
         dim_bins = scatterplot_data["dim_bins"]
 
+        X = scatterplot_data["counts2D"][(column_hor, column_ver)].T
+
+        if values_to_nans is not None:
+            X = X.astype(float)
+            X[X == values_to_nans] = np.nan
         plt.imshow(
-            scatterplot_data["counts2D"][(column_hor, column_ver)].T,
+            X,
             extent=list(dim_bins[column_hor][[0, -1]])
             + list(dim_bins[column_ver][[0, -1]]),
             origin="lower",
@@ -747,6 +754,8 @@ def save_2D_histograms(
         )
         plt.xlabel(column_hor)
         plt.ylabel(column_ver)
+        if title:
+            plt.title(title)
         if show:
             plt.show()
         else:
@@ -759,7 +768,7 @@ def save_2D_histograms(
 
         if both_diagonals:
             plt.imshow(
-                scatterplot_data["counts2D"][(column_hor, column_ver)],
+                X.T,
                 extent=list(dim_bins[column_ver][[0, -1]])
                 + list(dim_bins[column_hor][[0, -1]]),
                 origin="lower",
@@ -768,6 +777,8 @@ def save_2D_histograms(
             )
             plt.xlabel(column_ver)
             plt.ylabel(column_hor)
+            if title:
+                plt.title(title)
             if show:
                 plt.show()
             else:
