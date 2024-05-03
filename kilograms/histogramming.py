@@ -69,7 +69,7 @@ def histogram1D(
     xx: npt.NDArray,
     extent: tuple[float],
     bins: int,
-    mode: str = "fast",
+    mode: str = "safe",
 ) -> npt.NDArray[np.uint32]:
     """Make a 1D histogram.
 
@@ -113,7 +113,7 @@ def weighted_histogram1D(
     weights: npt.NDArray,
     extent: tuple[float],
     bins: int,
-    mode: str = "fast",
+    mode: str = "safe",
 ) -> npt.NDArray[np.uint32]:
     """Make a 1D histogram weighted by weights.
 
@@ -650,17 +650,21 @@ def get_scatterplot_data(
     bin_centers = {}
     counts1D = {}
     for column in data:
-        _min, _max = min_max(data[column])
-        _extent = _max - _min
-        _min -= _extent * _extent_mult
-        _max += _extent * _extent_mult
-        dim_bins[column] = np.linspace(_min, _max, bin_cnt + 1)
-        bin_centers[column] = get_bin_centers(dim_bins[column])
-        counts1D[column] = histogram1D(
-            xx=data[column],
-            extent=(_min, _max),
-            bins=bin_cnt,
-        )
+        try:
+            _min, _max = min_max(data[column])
+            _extent = _max - _min
+            _min -= _extent * _extent_mult
+            _max += _extent * _extent_mult
+            dim_bins[column] = np.linspace(_min, _max, bin_cnt + 1)
+            bin_centers[column] = get_bin_centers(dim_bins[column])
+            counts1D[column] = histogram1D(
+                xx=data[column],
+                extent=(_min, _max),
+                bins=bin_cnt,
+            )
+        except IndexError as exc:
+            print(column)
+            raise exc
     counts2D = {}
     for column_hor, column_ver in itertools.combinations(data, r=2):
         counts2D[(column_hor, column_ver)] = histogram2D(
