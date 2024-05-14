@@ -956,14 +956,25 @@ def grouped_hist2D(
     plt.close()
 
 
-# save_1D_histograms(
-#     scatterplot_data,
-#     folder="/tmp/testplots",
-#     dpi=100,
-# )
-
-# save_2D_histograms(
-#     scatterplot_data,
-#     folder="/tmp/testplots",
-#     dpi=100,
-# )
+def freqpolyplot(
+    bin_centers: npt.NDArray,
+    group_to_intensities: dict[str, npt.NDArray],
+    xlabel: str = "",
+    title: str = "",
+    path: str = "",
+    show: bool = False,
+    close: bool = True,
+    **kwargs,
+) -> None:
+    for group, intensities in group_to_intensities.items():
+        plt.plot(bin_centers, intensities, label=group)
+    plt.legend()
+    if xlabel != "":
+        plt.xlabel(xlabel)
+    plt.ylabel("count")
+    if show:
+        plt.show()
+    if path != "":
+        plt.savefig(path, **kwargs)
+    if close:
+        plt.close()
