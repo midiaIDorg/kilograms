@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import itertools
+import math
 import multiprocessing
 import typing
 from pathlib import Path
@@ -682,6 +683,59 @@ def get_scatterplot_data(
     )
 
 
+def get_grouped_scatterplot_data(
+    df: pd.DataFrame,
+    groups: list,
+    bin_cnt: int = 40,
+    _extent_mult: float = 0.01,
+    _full_matrix: bool = False,
+) -> dict:
+    _group_tags = set(groups)
+
+    dim_bins = {}
+    counts1D = {g: {} for g in _group_tags}
+    bin_centers = {}
+    get_bin_centers = lambda xx: (xx[1:] + xx[:-1]) / 2.0
+
+    for column in df.columns:
+        _min, _max = min_max(df[column].to_numpy())
+        _extent = _max - _min
+        _min -= _extent * _extent_mult
+        _max += _extent * _extent_mult
+        dim_bins[column] = np.linspace(_min, _max, bin_cnt + 1)
+        bin_centers[column] = get_bin_centers(dim_bins[column])
+        for _group, _xx in df[column].groupby(groups):
+            counts1D[_group][column] = histogram1D(
+                xx=_xx.to_numpy(),
+                extent=(_min, _max),
+                bins=bin_cnt,
+            )
+
+    counts2D = {g: {} for g in _group_tags}
+    for _group, _df in df.groupby(groups):
+        for column_hor, column_ver in itertools.combinations(df.columns, r=2):
+            counts2D[_group][(column_hor, column_ver)] = histogram2D(
+                xx=_df[column_hor].to_numpy(),
+                yy=_df[column_ver].to_numpy(),
+                extent=(
+                    dim_bins[column_hor][[0, -1]],
+                    dim_bins[column_ver][[0, -1]],
+                ),
+                bins=(bin_cnt, bin_cnt),
+            )
+            if _full_matrix:
+                counts2D[_group][(column_ver, column_hor)] = counts2D[_group][
+                    (column_hor, column_ver)
+                ].T
+
+    return dict(
+        counts1D=counts1D,
+        counts2D=counts2D,
+        dim_bins=dim_bins,
+        bin_centers=bin_centers,
+    )
+
+
 # scatterplot_data = get_scatterplot_data(df = edge_stats, bin_cnt = 100)
 
 
@@ -793,6 +847,113 @@ def save_2D_histograms(
                         **kwargs,
                     )
             plt.close()
+
+
+def two_groups_hist2D(
+    intensities_A,
+    intensities_B,
+    bins_A,
+    bins_B,
+    labels_A="A",
+    labels_B="B",
+    title="",
+    path=None,
+    show=False,
+    levels=3,
+    vmin=None,
+    vmax=None,
+    **kwargs,
+) -> None:
+    if vmin is None:
+        vmin = min(intensities_A.min(), intensities_B.min())
+    if vmax is None:
+        vmax = max(intensities_A.max(), intensities_B.max())
+    plt.contourf(
+        bins_A,
+        bins_B,
+        intensities_A.T,
+        levels=levels,
+        vmin=vmin,
+        vmax=vmax,
+    )
+    plt.contour(
+        bins_A,
+        bins_B,
+        intensities_B.T,
+        levels=levels,
+        colors="white",
+        vmin=vmin,
+        vmax=vmax,
+    )
+    plt.xlabel(labels_A)
+    plt.ylabel(labels_B)
+    if title:
+        plt.title(title)
+    if show:
+        plt.show()
+    if path is not None:
+        plt.savefig(path, **kwargs)
+
+
+def grouped_hist2D(
+    intensity_2D_marginals: list[npt.NDArray],
+    x_bin_centers: npt.NDArray,
+    y_bin_centers: npt.NDArray,
+    xlabel: str,
+    ylabel: str,
+    colors: list[str],
+    title: str = "",
+    path: str = "",
+    show: bool = False,
+    levels: int = 3,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    **kwargs,
+) -> None:
+    assert len(colors) + 1 == len(
+        intensity_2D_marginals
+    ), "All but first set of marginal intensities needs a color to map to."
+
+    if vmin is None:
+        vmin = math.inf
+        for intensities in intensity_2D_marginals:
+            vmin = min(vmin, intensities.min())
+
+    if vmax is None:
+        vmax = -math.inf
+        for intensities in intensity_2D_marginals:
+            vmax = max(vmax, intensities.max())
+
+    intensity_2D_marginals = iter(intensity_2D_marginals)
+
+    plt.contourf(
+        x_bin_centers,
+        y_bin_centers,
+        next(intensity_2D_marginals).T,
+        levels=levels,
+        vmin=vmin,
+        vmax=vmax,
+    )
+
+    for intensities, color in zip(intensity_2D_marginals, colors):
+        plt.contour(
+            x_bin_centers,
+            y_bin_centers,
+            intensities.T,
+            levels=levels,
+            colors=color,
+            vmin=vmin,
+            vmax=vmax,
+        )
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    if title:
+        plt.title(title)
+    if show:
+        plt.show()
+    if path != "":
+        plt.savefig(path, **kwargs)
+    plt.close()
 
 
 # save_1D_histograms(
