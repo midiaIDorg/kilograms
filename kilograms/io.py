@@ -34,6 +34,6 @@ except ModuleNotFoundError:
                     time.sleep(random.uniform(0.0, 0.1))
             return pd.read_hdf(filename)
 
-    raise RuntimeError(
-        f"Don't know how to open file with {extension} extension. Path: {str(filename)}"
-    )
+        raise RuntimeError(
+            f"Don't know how to open file with {extension} extension. Path: {str(filename)}"
+        )
