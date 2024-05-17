@@ -32,7 +32,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 if (not args.force) and (not (args.output is None)):
-    assert not args.output.lexists()
+    assert not args.output.exists()
 
 
 data = pandas_read_table(args.data_path)
