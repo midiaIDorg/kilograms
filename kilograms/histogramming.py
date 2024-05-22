@@ -978,3 +978,34 @@ def freqpolyplot(
         plt.savefig(path, **kwargs)
     if close:
         plt.close()
+
+
+def hist2D(
+    intensities: npt.NDArray,
+    extent: tuple[tuple[int]],
+    xlabel: str = "",
+    ylabel: str = "",
+    title: str = "",
+    show: bool = False,
+    path: str | None = None,
+    imshow_kwargs: dict = {},
+    **kwargs,
+) -> None:
+    plt.imshow(
+        intensities.T,
+        extent=extent,
+        origin="lower",
+        aspect="auto",
+        **imshow_kwargs,
+    )
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
+    if title:
+        plt.title(title)
+    if show:
+        plt.show()
+    if path is not None:
+        plt.savefig(path, **kwargs)
+    plt.close()
