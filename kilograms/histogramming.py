@@ -988,9 +988,13 @@ def hist2D(
     title: str = "",
     show: bool = False,
     path: str | None = None,
+    value_below_which_nan: float | None = None,
     imshow_kwargs: dict = {},
     **kwargs,
 ) -> None:
+    if value_below_which_nan is not None:
+        intensities = intensities.astype(float)
+        intensities[intensities <= value_below_which_nan] = np.nan
     plt.imshow(
         intensities.T,
         extent=extent,
