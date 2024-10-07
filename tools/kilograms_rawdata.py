@@ -8,28 +8,28 @@ from pathlib import Path
 import numba
 import numpy as np
 import opentimspy
-from IPython import get_ipython
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 # from scipy.interpolate import RegularGridInterpolator
 
+# from IPython import get_ipython
 
-get_ipython().run_line_magic("load_ext", "autoreload")
-get_ipython().run_line_magic("autoreload", "2")
+# get_ipython().run_line_magic("load_ext", "autoreload")
+# get_ipython().run_line_magic("autoreload", "2")
 
 
-class args:
-    rawdata_path = "spectra/G8027.d"
-    ms_level = 1
-    output = None
-    progressbar_message = "Iterating for test"
-    tof_rounding = 100
-    marginals1D = True
-    verbose = True
-    width = 30
-    height = 30
-    dpi = 100
+# class args:
+#     rawdata_path = "spectra/G8027.d"
+#     ms_level = 1
+#     output = None
+#     progressbar_message = "Iterating for test"
+#     tof_rounding = 100
+#     marginals1D = True
+#     verbose = True
+#     width = 30
+#     height = 30
+#     dpi = 100
 
 
 parser = argparse.ArgumentParser(description="Produce kilograms plot.")
