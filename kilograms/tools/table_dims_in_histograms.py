@@ -15,20 +15,11 @@ from kilograms.histogramming import histogram1D, histogram2D, min_max
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", 5)
 
-if False:
-    args = SimpleNamespace(
-        tables=[
-            Path(
-                "P/cluster_stats/raw/GyMCIGRxW2wfpplKv6G-YesO2L__h1dbUALNs7Z3i6AFpnGG6TYRwcOj12wOPSMKvOyCMEOqu6nCca2FNOrnK8a0K5H0imag4x07fsnzXBlhwTlPYkvA8WhrukrIAsPyWSPhKl_WSABXx60HGlcEs2tsvw1NN7TgcD_u074u2ycFhGLKaDl2tbPkwA_EdEsK9W-smPFKWrAg-4OFdt4tSQ==/precursor_stats.parquet"
-            ),
-            Path(
-                "P/cluster_stats/raw/GyMCIGRxW2wfpplKv6G-YesO2L__h1dbUALNs7Z3i6AFpnGG6TYRwcOj12wOPSMKvOyCMEOqu6nCca2FNOrnK8a0K5H0imag4x07fsnzXBlhwTlPYkvA8WhrukrIAsPyWSPhKl_WSABXx60HGlcEs2tsvw1NN7TgcD_u074u2ycFhGLKaDl2tbPkwA_EdEsK9W-smPFKWrAg-4OFdt4tSQ==/precursor_stats.parquet"
-            ),
-        ],
-        config=Path("configs/plots/histograms_config.toml"),
-        output=Path("/tmp/testplots"),
-    )
-else:
+
+get_bin_centers = lambda xx: (xx[1:] + xx[:-1]) / 2.0
+
+
+def main():
     parser = argparse.ArgumentParser(
         description="Compare two sets of clusters.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -52,9 +43,6 @@ else:
     )
     args = SimpleNamespace(**parser.parse_args().__dict__)
 
-get_bin_centers = lambda xx: (xx[1:] + xx[:-1]) / 2.0
-
-if __name__ == "__main__":
     with open(args.config, "rb") as f:
         config = tomllib.load(f)
 
@@ -118,21 +106,5 @@ if __name__ == "__main__":
         plt.close()
 
 
-# # column_hor, column_ver = "frame_wmean", "tof_wmean"
-# # group, df = next( zip(groups, dfs))
-# for column_hor, column_ver in itertools.combinations(columns, r=2):
-#     for group, df in zip(groups, dfs):
-#         intensities = histogram2D(
-#             xx=df[column_hor],
-#             yy=df[column_ver],
-#             extent=(dim_bins[column_hor][[0, -1]], dim_bins[column_ver][[0, -1]]),
-#             bins=(config["bins"], config["bins"]),
-#             mode="safe",
-#         )
-#         w = np.quantile(intensities, np.linspace(0.1,1,3))
-#         w = np.unique(w)
-
-#         plt.contour(intensities, color="red", levels=w, label=group)
-#     plt.legend()
-#     plt.title(f"column")
-#     plt.show()
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools >= 64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name="kilograms"
+version="0.0.6"
+description="Histograms for large data."
+readme="README.md"
+authors=[
+    {name="Mateusz Krzysztof Łącki",email="matteo.lacki@gmail.com"},
+    {name="Michał Piotr Startek",email="michalsta@mimuw.edu.pl"},
+]
+dependencies = [
+    "numba",
+    "numpy",
+    "toml",
+    "matplotlib",
+    "pandas",  # can remove it later
+    "tables",  # what for? I really don't know
+    "duckdb",
+]
+
+[project.scripts]
+kilograms_duckdb_plot = "kilograms.tools.kilograms_duckdb_plot:main"
+kilograms_make_plot = "kilograms.tools.kilograms_make_plot:main"
+kilograms_plot = "kilograms.tools.kilograms_plot:main"
+kilograms_predefined_plots = "kilograms.tools.kilograms_predefined_plots:main"
+kilograms_rawdata = "kilograms.tools.kilograms_rawdata:main"
+kilograms_scatterplot_feather = "kilograms.tools.kilograms_scatterplot_feather:main"
+table_dims_in_histograms = "kilograms.tools.table_dims_in_histograms:main"
+
+
+[project.urls]
+homepage="https://github.com/midiaIDorg/kilograms.git"
+repository="https://github.com/midiaIDorg/kilograms.git"
+
+[tool.uv]
+reinstall-package = ["kilograms"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

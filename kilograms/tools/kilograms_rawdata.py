@@ -5,89 +5,69 @@ from functools import partial
 from math import ceil, floor, inf
 from pathlib import Path
 
+from tqdm import tqdm
+
 import numba
 import numpy as np
 import opentimspy
 from matplotlib import pyplot as plt
-from tqdm import tqdm
-
-# from scipy.interpolate import RegularGridInterpolator
-
-# from IPython import get_ipython
-
-# get_ipython().run_line_magic("load_ext", "autoreload")
-# get_ipython().run_line_magic("autoreload", "2")
 
 
-# class args:
-#     rawdata_path = "spectra/G8027.d"
-#     ms_level = 1
-#     output = None
-#     progressbar_message = "Iterating for test"
-#     tof_rounding = 100
-#     marginals1D = True
-#     verbose = True
-#     width = 30
-#     height = 30
-#     dpi = 100
+def main():
+    parser = argparse.ArgumentParser(description="Produce kilograms plot.")
+    parser.add_argument(
+        "rawdata_path", help="File containing data to be plotted", type=Path
+    )
+    parser.add_argument(
+        "ms_level",
+        help="Which MS level to plot?",
+        type=int,
+        choices=[1, 2],
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output folder path. Will display onscreen if omitted.",
+        type=Path,
+        default=None,
+    )
+    parser.add_argument(
+        "--progressbar_message",
+        help="Message to use with tqdm.",
+        default=None,
+    )
+    parser.add_argument(
+        "--tof_rounding",
+        help="Order of numbers to round up to.",
+        default=100,
+        type=int,
+    )
+    parser.add_argument(
+        "--verbose",
+        help="Print info to stdout: logging is for people with too much time on their hands.",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--width",
+        help="Plot width.",
+        type=int,
+        default=10,
+    )
+    parser.add_argument(
+        "--height",
+        help="Plot height.",
+        type=int,
+        default=10,
+    )
+    parser.add_argument(
+        "--dpi",
+        help="Plot dpi.",
+        type=int,
+        default=100,
+    )
+    parser.add_argument("--transparent", action="store_true")
+    args = parser.parse_args()
 
-
-parser = argparse.ArgumentParser(description="Produce kilograms plot.")
-parser.add_argument(
-    "rawdata_path", help="File containing data to be plotted", type=Path
-)
-parser.add_argument(
-    "ms_level",
-    help="Which MS level to plot?",
-    type=int,
-    choices=[1, 2],
-)
-parser.add_argument(
-    "-o",
-    "--output",
-    help="Output folder path. Will display onscreen if omitted.",
-    type=Path,
-    default=None,
-)
-parser.add_argument(
-    "--progressbar_message",
-    help="Message to use with tqdm.",
-    default=None,
-)
-parser.add_argument(
-    "--tof_rounding",
-    help="Order of numbers to round up to.",
-    default=100,
-    type=int,
-)
-parser.add_argument(
-    "--verbose",
-    help="Print info to stdout: logging is for people with too much time on their hands.",
-    action="store_true",
-)
-parser.add_argument(
-    "--width",
-    help="Plot width.",
-    type=int,
-    default=10,
-)
-parser.add_argument(
-    "--height",
-    help="Plot height.",
-    type=int,
-    default=10,
-)
-parser.add_argument(
-    "--dpi",
-    help="Plot dpi.",
-    type=int,
-    default=100,
-)
-parser.add_argument("--transparent", action="store_true")
-args = parser.parse_args()
-
-
-if __name__ == "__main__":
     op = opentimspy.OpenTIMS(args.rawdata_path)
 
     frames = op.ms1_frames
@@ -255,3 +235,7 @@ if __name__ == "__main__":
         # plt.ylabel(c1)
         # plt.title(f"{transform.__name__}(intensity)")
         # plt.show()
+
+
+if __name__ == "__main__":
+    main()
