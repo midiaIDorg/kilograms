@@ -20,6 +20,7 @@ dependencies = [
     "tables",  # what for? I really don't know
     "duckdb",
     "tqdm",
+    "opentimspy",
 ]
 
 [project.scripts]
