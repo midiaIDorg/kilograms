@@ -131,6 +131,19 @@ def weighted_histogram1D(
     return weighted_histogram1D_modes[mode](xx, weights, extent, bins)
 
 
+def discrete_histogram1D_slow(xx):
+    _min, _max = min_max(xx)
+    _min = np.intp(_min)
+    _max = np.intp(_max)
+    hist = np.zeros(dtype=np.uintp, shape=_max - _min + 1)
+    for i, x in enumerate(xx):
+        hist[x - _min] += 1
+    return np.arange(_min, _max + 1), hist
+
+
+discrete_histogram1D = njit(discrete_histogram1D_slow)
+
+
 def histogram2D_slow(
     xx: npt.NDArray,
     yy: npt.NDArray,
