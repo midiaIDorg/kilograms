@@ -5,6 +5,7 @@ import itertools
 import math
 import multiprocessing
 import typing
+
 from pathlib import Path
 
 import matplotlib.figure
@@ -12,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+
 from numba import njit
 
 # TODO:
@@ -37,6 +39,12 @@ def min_max(xx: npt.NDArray) -> tuple[float, float]:
         xx_min = min(xx_min, x)
         xx_max = max(xx_max, x)
     return (xx_min, xx_max)
+
+
+def minmax(xx: pd.Series | npt.NDArray) -> tuple[float, float]:
+    if isinstance(xx, pd.Series):
+        xx = xx.to_numpy()
+    return min_max(xx)
 
 
 def get_max_extent(*extents):

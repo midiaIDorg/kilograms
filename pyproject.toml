@@ -12,6 +12,7 @@ authors=[
     {name="Michał Piotr Startek",email="michalsta@mimuw.edu.pl"},
 ]
 dependencies = [
+    "click",
     "numba",
     "numpy",
     "toml",
@@ -31,7 +32,7 @@ kilograms_predefined_plots = "kilograms.tools.kilograms_predefined_plots:main"
 kilograms_rawdata = "kilograms.tools.kilograms_rawdata:main"
 kilograms_scatterplot_feather = "kilograms.tools.kilograms_scatterplot_feather:main"
 table_dims_in_histograms = "kilograms.tools.table_dims_in_histograms:main"
-
+raw_data_2D_histograms = "kilograms.tools.histogram2D:raw_data_2D_histograms"
 
 [project.urls]
 homepage="https://github.com/midiaIDorg/kilograms.git"
